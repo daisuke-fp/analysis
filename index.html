@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポートフォリオ分析・将来シミュレーションツール</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+	.current-portfolio { background-color: #e7f3ff; border-color: #007bff; }	
+	.improved-portfolio { background-color: #e8f5e8; border-color: #28a745; }
+	.performance-section { background-color: #fff5f5; border-color: #dc3545; }
+	.simulation-section { background-color: #f0f8ff; border-color: #6f42c1; }
+	.settings-section { background-color: #f5f5f5; border-color: #6c757d; }
+        .disclaimer-section { 
+            background-color: #fffbf0; 
+            border-color: #f59e0b; 
+            border: 3px solid #f59e0b;
+            margin-top: 2rem;
+        }
+        .chart-container { height: 400px; }
+        .progress-bar { transition: width 0.3s ease; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; }
+        .input-field { transition: border-color 0.2s ease; }
+        .input-field:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    </style>
+</head>
+<body class="bg-gray-50 p-4">
+    <div class="max-w-7xl mx-auto">
+        <h1 class="text-4xl font-bold text-center text-black mb-8"> <i class="fas fa-chart-line text-black mr-3"></i>ポートフォリオ分析・将来シミュレーションツール</h1>
+        
+        <!-- 投資期間選択 -->
+        <div class="settings-section border-2 rounded-lg p-6 mb-6 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-700"><i class="fas fa-edit mr-2"></i>投資設定</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">過去データ取得期間</label>
+                    <select id="investmentPeriod" class="w-full p-2 border border-gray-300 rounded-md input-field">
+                        <option value="0">5年</option>
+                        <option value="1">10年</option>
+                        <option value="2">20年</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">将来シミュレーション(年)</label>
+                    <input type="number" id="simulationYears" value="10" min="1" max="50" class="w-full p-2 border border-gray-300 rounded-md input-field">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">リスクフリーレート (%)</label>
+                    <input type="number" id="riskFreeRate" value="2.0" step="0.1" class="w-full p-2 border border-gray-300 rounded-md input-field">
+                </div>
+            </div>
+        </div>
+
+        <!-- ポートフォリオ比較セクション -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <!-- 現在のポートフォリオ -->
+            <div class="current-portfolio border-2 rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-blue-600">
+		     <i class="fas fa-chart-pie text-blue-600 mr-2"></i> 現在のポートフォリオ
+                </h2>
+                <div id="currentPortfolioInputs" class="space-y-3 mb-4"></div>
+		<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
+                <div class="text-lg font-semibold text-gray-700">
+                    投資総額: <span id="currentTotalAmount" class="text-blue-600">0</span> 万円
+                </div>
+            </div>
+	 </div>
+            <!-- 改善ポートフォリオ -->
+            <div class="improved-portfolio border-2 rounded-lg p-6 shadow-lg">
+                <h2 class="text-2xl font-bold mb-4 text-green-600">
+		<i class="fas fa-star mr-2"></i>改善ポートフォリオ</h2>
+                <div id="improvedPortfolioInputs" class="space-y-3 mb-4"></div>
+		<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
+                <div class="text-lg font-semibold text-gray-700">
+                    投資総額: <span id="improvedTotalAmount" class="text-green-600">0</span> 万円
+                </div>
+            </div>
+        </div>
+	</div>
+        <!-- 円グラフ -->
+       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <div class="current-portfolio border-2 rounded-lg shadow-md p-6">
+        <h3 class="text-2xl font-semibold mb-4 text-center text-blue-600">
+	<i class="fas fa-chart-pie text-blue-600 mr-2"></i>現在のポートフォリオ構成</h3>
+        <div class="chart-container">
+            <canvas id="currentPieChart"></canvas>
+        </div>
+    </div>
+    <div class="improved-portfolio border-2 rounded-lg shadow-md p-6">
+        <h3 class="text-2xl font-semibold mb-4 text-center text-green-600">
+	<i class="fas fa-star mr-2"></i>改善ポートフォリオ構成</h3>
+        <div class="chart-container">
+            <canvas id="improvedPieChart"></canvas>
+        </div>
+    </div>
+</div>
+        <!-- パフォーマンス評価 -->
+        <div class="performance-section border-2 rounded-lg p-6 mb-6 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center text-red-600"><i class="fas fa-tachometer-alt text-orange-600 mr-2"></i> パフォーマンス評価</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-blue-600"><i class="fas fa-chart-pie text-blue-600 mr-2"></i>現在のポートフォリオ</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">期待リターン</span>
+                                <span id="currentExpectedReturn" class="text-sm font-medium">0.00%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="currentReturnBar" class="bg-green-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">リスク</span>
+                                <span id="currentRisk" class="text-sm font-medium">0.00%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="currentRiskBar" class="bg-red-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">シャープレシオ</span>
+                                <span id="currentSharpe" class="text-sm font-medium">0.00</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="currentSharpeBar" class="bg-blue-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-lg font-medium mb-3 text-green-600"> <i class="fas fa-star mr-2 text-green-600"></i>改善ポートフォリオ</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">期待リターン</span>
+                                <span id="improvedExpectedReturn" class="text-sm font-medium">0.00%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="improvedReturnBar" class="bg-green-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">リスク</span>
+                                <span id="improvedRisk" class="text-sm font-medium">0.00%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="improvedRiskBar" class="bg-red-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-sm font-medium">シャープレシオ</span>
+                                <span id="improvedSharpe" class="text-sm font-medium">0.00</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-4">
+                                <div id="improvedSharpeBar" class="bg-blue-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 将来シミュレーション -->
+        <div class="simulation-section border-2 rounded-lg p-6 shadow-lg">
+            <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-800">
+	    <i class="fas fa-chart-bar mr-2"></i>将来シミュレーション</h2>
+            <div class="chart-container mb-4">
+                <canvas id="futureSimulationChart"></canvas>
+            </div>
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div class="text-center">
+		　　<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
+                    <div class="font-medium text-black">元本割れ確率</div>
+                    <div class="text-lg font-bold">
+                        <span id="currentLossProb" class="text-blue-600">0.0%</span> / <span id="improvedLossProb" class="text-green-600">0.0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 免責事項 - 独立したセクションとして最下部に配置 -->
+    <div class="max-w-7xl mx-auto">
+        <div class="disclaimer-section rounded-lg p-8 shadow-xl">
+            <h2 class="text-3xl font-bold mb-6 flex items-center text-yellow-600">
+                <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>免責事項
+            </h2>
+            <div class="text-sm text-gray-700 space-y-1 leading-tight">
+                <p>※本シミュレーションは、将来の運用成果を保証するものではありません。過去のデータ等に基づいて試算を行っており、シミュレーション結果と実際の結果が一致しない場合があります。また、入力された取引と同様の取引を実際に行った場合でも、シミュレーションで表示される結果と実際の結果が一致するとは限りません。</p>
+                <p>※本シミュレーションでは、税金や手数料等は考慮しておりません。</p>
+                <p>※本シミュレーションおよび掲載情報の利用により生じたいかなる損害（直接的・間接的を問わず）についても、当社は一切の責任を負いません。実際の資産運用や投資判断は、必ずご自身の責任において行ってください。</p>
+                <p>※当社は、お客様が本シミュレーションを利用したことにより生じた結果について、一切の責任を負いません。また、本シミュレーションは簡易的な計算方法を用いており、その正確性および完全性を保証するものではありません。なお、シミュレーション内容は予告なく変更する場合があります。</p>
+                <p>※ご入力いただいた情報は、本シミュレーション以外には使用せず、当社で取得・蓄積することもありません。</p>
+                <p>※本シミュレーションはJavaScriptを使用しています。JavaScriptが無効になっている場合、正しく動作しないことがありますので、有効に設定のうえご利用ください。</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const assets = [
+            { name: "現金", returns: [0, 7.8, 0], risks: [0, 14.5, 0] },
+            { name: "国内株式", returns: [15.1, 7.8, 6.8], risks: [12.1, 14.5, 16.7] },
+            { name: "米国株式", returns: [22.4, 14.2, 11.9], risks: [16.1, 17.3, 18.3] },
+            { name: "先進国株式", returns: [22.4, 12.6, 10.8], risks: [15.6, 17.0, 18.8] },
+            { name: "新興国株式", returns: [14.3, 6.0, 8.2], risks: [16.2, 17.5, 22.3] },
+            { name: "世界株式", returns: [12.5, 9.66, 9.0], risks: [15.68, 15.68, 14.68] },
+            { name: "国内債券", returns: [-2.2, -0.5, 0.7], risks: [2.5, 2.3, 2.1] },
+            { name: "米国債", returns: [2.73, 1.5, 4.5], risks: [6.0, 6.0, 5.0] },
+            { name: "先進国債券", returns: [4.3, 2.2, 3.8], risks: [6.4, 6.7, 8.5] },
+            { name: "新興国債券", returns: [8.4, 4.6, 6.8], risks: [9.7, 10.2, 11.5] },
+            { name: "国内REIT", returns: [4.7, 3.3, 5.0], risks: [10.4, 12.3, 17.5] },
+            { name: "先進国REIT", returns: [14.7, 6.4, 7.4], risks: [17.4, 18.0, 21.6] },
+            { name: "新興国REIT", returns: [17.5, 1.3, 6.3], risks: [14.7, 21.0, 22.6] },
+            { name: "金", returns: [20.9, 12.4, 12.5], risks: [15.5, 13.4, 16.7] },
+            { name: "コモディティ", returns: [19.7, 3.5, 1.1], risks: [18.1, 17.1, 18.5] }
+        ];
+
+        const colors = [
+            '#FF6666', '#FF99CC', '#99CCFF', '#A3BFFF', '#80FFCC',
+            '#66D9EF', '#FF9999', '#B266FF', '#CC99FF', '#99FFCC',
+            '#FFB380', '#FFCC99', '#FF99A8', '#FFFF99', '#C2E17F'
+        ];
+
+        let currentPieChart, improvedPieChart, futureChart;
+
+        // 入力フィールドの生成
+        function createInputFields() {
+            const currentInputs = document.getElementById('currentPortfolioInputs');
+            const improvedInputs = document.getElementById('improvedPortfolioInputs');
+
+            assets.forEach((asset, index) => {
+                // 現在のポートフォリオ
+                const currentDiv = document.createElement('div');
+                currentDiv.className = 'flex justify-between items-center';
+                currentDiv.innerHTML = `
+                    <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="current-${index}" value="0" min="0" step="10" 
+                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm" 
+                               onchange="updatePortfolio()">
+                        <span class="text-xs text-gray-500">万円</span>
+                        <span id="current-percent-${index}" class="text-xs text-gray-600 w-12">0.0%</span>
+                    </div>
+                `;
+                currentInputs.appendChild(currentDiv);
+
+                // 改善ポートフォリオ
+                const improvedDiv = document.createElement('div');
+                improvedDiv.className = 'flex justify-between items-center';
+                improvedDiv.innerHTML = `
+                    <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" id="improved-${index}" value="0" min="0" step="10" 
+                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm" 
+                               onchange="updatePortfolio()">
+                        <span class="text-xs text-gray-500">万円</span>
+                        <span id="improved-percent-${index}" class="text-xs text-gray-600 w-12">0.0%</span>
+                    </div>
+                `;
+                improvedInputs.appendChild(improvedDiv);
+            });
+        }
+
+        // ポートフォリオ計算
+        function calculatePortfolio(amounts, periodIndex) {
+            const total = amounts.reduce((sum, amount) => sum + amount, 0);
+            if (total === 0) return { return: 0, risk: 0, weights: new Array(assets.length).fill(0) };
+
+            const weights = amounts.map(amount => amount / total);
+            
+            let portfolioReturn = 0;
+            let portfolioVariance = 0;
+
+            weights.forEach((weight, i) => {
+                portfolioReturn += weight * assets[i].returns[periodIndex];
+                portfolioVariance += Math.pow(weight * assets[i].risks[periodIndex], 2);
+            });
+
+            return {
+                return: portfolioReturn,
+                risk: Math.sqrt(portfolioVariance),
+                weights: weights
+            };
+        }
+
+        // 将来価値計算
+        function calculateFutureValues(amounts, periodIndex, years) {
+            const portfolio = calculatePortfolio(amounts, periodIndex);
+            const total = amounts.reduce((sum, amount) => sum + amount, 0);
+            
+            if (total === 0) return {
+                principal: 0, median: 0, mode: 0, mean: 0, upper30: 0, lower30: 0, lossProb: 0
+            };
+
+            const annualReturn = portfolio.return / 100;
+            const annualRisk = portfolio.risk / 100;
+            
+            // 複利計算
+            const meanValue = total * Math.pow(1 + annualReturn, years);
+            
+            // 正規分布仮定での計算
+            const variance = Math.pow(annualRisk * Math.sqrt(years), 2);
+            const stdDev = total * Math.sqrt(variance) * Math.pow(1 + annualReturn, years);
+            
+            // 分位点計算（正規分布近似）
+            const median = meanValue;
+            const mode = meanValue;
+            const upper30 = meanValue + 0.524 * stdDev; // 70パーセンタイル
+            const lower30 = meanValue - 0.524 * stdDev; // 30パーセンタイル
+            
+            // 元本割れ確率（正規分布仮定）
+            const z = (total - meanValue) / stdDev;
+            const lossProb = Math.max(0, Math.min(1, 0.5 * (1 + erf(z / Math.sqrt(2))))) * 100;
+
+            return {
+                principal: total,
+                median: median,
+                mode: mode,
+                mean: meanValue,
+                upper30: upper30,
+                lower30: lower30,
+                lossProb: lossProb
+            };
+        }
+
+        // エラー関数の近似
+        function erf(x) {
+            const a1 =  0.254829592;
+            const a2 = -0.284496736;
+            const a3 =  1.421413741;
+            const a4 = -1.453152027;
+            const a5 =  1.061405429;
+            const p  =  0.3275911;
+
+            const sign = x >= 0 ? 1 : -1;
+            x = Math.abs(x);
+
+            const t = 1.0 / (1.0 + p * x);
+            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+
+            return sign * y;
+        }
+
+        // 円グラフ更新
+        function updatePieChart(chartId, amounts, title) {
+            const ctx = document.getElementById(chartId).getContext('2d');
+            const total = amounts.reduce((sum, amount) => sum + amount, 0);
+            
+            if (chartId === 'currentPieChart' && currentPieChart) {
+                currentPieChart.destroy();
+            }
+            if (chartId === 'improvedPieChart' && improvedPieChart) {
+                improvedPieChart.destroy();
+            }
+
+            const validData = [];
+            const validLabels = [];
+            const validColors = [];
+
+            amounts.forEach((amount, index) => {
+                if (amount > 0) {
+                    validData.push(amount);
+                    validLabels.push(`${assets[index].name} (${(amount/total*100).toFixed(1)}%)`);
+                    validColors.push(colors[index]);
+                }
+            });
+
+            const config = {
+                type: 'doughnut',
+                data: {
+                    labels: validLabels,
+                    datasets: [{
+                        data: validData,
+                        backgroundColor: validColors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                font: { size: 10 }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: title,
+                            font: { size: 14 }
+                        }
+                    }
+                }
+            };
+
+            if (chartId === 'currentPieChart') {
+                currentPieChart = new Chart(ctx, config);
+            } else {
+                improvedPieChart = new Chart(ctx, config);
+            }
+        }
+
+        // 棒グラフ更新
+        function updateBarChart(currentFuture, improvedFuture) {
+            const ctx = document.getElementById('futureSimulationChart').getContext('2d');
+            
+            if (futureChart) {
+                futureChart.destroy();
+            }
+
+            const labels = ['投資元本', '中央値', '最頻値', '平均値', '上位30%', '下位30%'];
+            const currentData = [
+                currentFuture.principal, currentFuture.median, currentFuture.mode,
+                currentFuture.mean, currentFuture.upper30, currentFuture.lower30
+            ];
+            const improvedData = [
+                improvedFuture.principal, improvedFuture.median, improvedFuture.mode,
+                improvedFuture.mean, improvedFuture.upper30, improvedFuture.lower30
+            ];
+
+            futureChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: '現在のポートフォリオ',
+                            data: currentData,
+                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                            borderColor: 'rgba(59, 130, 246, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: '改善ポートフォリオ',
+                            data: improvedData,
+                            backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                            borderColor: 'rgba(34, 197, 94, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value.toLocaleString() + '万円';
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '万円';
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: '将来シミュレーション結果',
+                            font: { size: 16 }
+                        }
+                    }
+                }
+            });
+        }
+
+        // メイン更新関数
+        function updatePortfolio() {
+            const periodIndex = parseInt(document.getElementById('investmentPeriod').value);
+            const years = parseInt(document.getElementById('simulationYears').value);
+            const riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value);
+
+            // 投資額取得
+            const currentAmounts = assets.map((_, index) => 
+                parseFloat(document.getElementById(`current-${index}`).value) || 0
+            );
+            const improvedAmounts = assets.map((_, index) => 
+                parseFloat(document.getElementById(`improved-${index}`).value) || 0
+            );
+
+            // 合計額計算
+            const currentTotal = currentAmounts.reduce((sum, amount) => sum + amount, 0);
+            const improvedTotal = improvedAmounts.reduce((sum, amount) => sum + amount, 0);
+
+            document.getElementById('currentTotalAmount').textContent = currentTotal.toLocaleString();
+            document.getElementById('improvedTotalAmount').textContent = improvedTotal.toLocaleString();
+
+            // パーセンテージ更新
+            currentAmounts.forEach((amount, index) => {
+                const percent = currentTotal > 0 ? (amount / currentTotal * 100).toFixed(1) : 0;
+                document.getElementById(`current-percent-${index}`).textContent = `${percent}%`;
+            });
+            improvedAmounts.forEach((amount, index) => {
+                const percent = improvedTotal > 0 ? (amount / improvedTotal * 100).toFixed(1) : 0;
+                document.getElementById(`improved-percent-${index}`).textContent = `${percent}%`;
+            });
+
+            // ポートフォリオ計算
+            const currentPortfolio = calculatePortfolio(currentAmounts, periodIndex);
+            const improvedPortfolio = calculatePortfolio(improvedAmounts, periodIndex);
+
+            // シャープレシオ計算
+            const currentSharpe = currentPortfolio.risk > 0 ? (currentPortfolio.return - riskFreeRate) / currentPortfolio.risk : 0;
+            const improvedSharpe = improvedPortfolio.risk > 0 ? (improvedPortfolio.return - riskFreeRate) / improvedPortfolio.risk : 0;
+
+            // パフォーマンス表示更新
+            updatePerformanceDisplay('current', currentPortfolio.return, currentPortfolio.risk, currentSharpe);
+            updatePerformanceDisplay('improved', improvedPortfolio.return, improvedPortfolio.risk, improvedSharpe);
+
+            // グラフ更新
+            updatePieChart('currentPieChart', currentAmounts,);
+            updatePieChart('improvedPieChart', improvedAmounts,);
+
+            // 将来価値計算
+            const currentFuture = calculateFutureValues(currentAmounts, periodIndex, years);
+            const improvedFuture = calculateFutureValues(improvedAmounts, periodIndex, years);
+
+            updateBarChart(currentFuture, improvedFuture);
+
+            // 元本割れ確率表示
+            document.getElementById('currentLossProb').textContent = `${currentFuture.lossProb.toFixed(1)}%`;
+            document.getElementById('improvedLossProb').textContent = `${improvedFuture.lossProb.toFixed(1)}%`;
+        }
+
+        function updatePerformanceDisplay(type, expectedReturn, risk, sharpe) {
+            document.getElementById(`${type}ExpectedReturn`).textContent = `${expectedReturn.toFixed(2)}%`;
+            document.getElementById(`${type}Risk`).textContent = `${risk.toFixed(2)}%`;
+            document.getElementById(`${type}Sharpe`).textContent = sharpe.toFixed(2);
+
+            // プログレスバー更新（最大値を適切に設定）
+            const maxReturn = 25;
+            const maxRisk = 25;
+            const maxSharpe = 2;
+
+            document.getElementById(`${type}ReturnBar`).style.width = `${Math.min(100, (expectedReturn / maxReturn) * 100)}%`;
+            document.getElementById(`${type}RiskBar`).style.width = `${Math.min(100, (risk / maxRisk) * 100)}%`;
+            document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, (sharpe / maxSharpe) * 100)}%`;
+        }
+
+        // イベントリスナー
+        document.getElementById('investmentPeriod').addEventListener('change', updatePortfolio);
+        document.getElementById('simulationYears').addEventListener('change', updatePortfolio);
+        document.getElementById('riskFreeRate').addEventListener('change', updatePortfolio);
+
+        // 初期化
+        createInputFields();
+        updatePortfolio();
+    </script>
+    <footer class="text-center text-gray-500 text-sm py-4 mt-8 border-t">
+        &copy; 2024 finbright. All Rights Reserved.
+    </footer>
+</body>
+</html>
