@@ -8,11 +8,11 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-	.current-portfolio { background-color: #e7f3ff; border-color: #007bff; }	
-	.improved-portfolio { background-color: #e8f5e8; border-color: #28a745; }
-	.performance-section { background-color: #fff5f5; border-color: #dc3545; }
-	.simulation-section { background-color: #f0f8ff; border-color: #6f42c1; }
-	.settings-section { background-color: #f5f5f5; border-color: #6c757d; }
+        .current-portfolio { background-color: #e7f3ff; border-color: #007bff; }
+        .improved-portfolio { background-color: #e8f5e8; border-color: #28a745; }
+        .performance-section { background-color: #fff5f5; border-color: #dc3545; }
+        .simulation-section { background-color: #f0f8ff; border-color: #6f42c1; }
+        .settings-section { background-color: #f5f5f5; border-color: #6c757d; }
         .disclaimer-section { 
             background-color: #fffbf0; 
             border-color: #f59e0b; 
@@ -24,16 +24,44 @@
         body { font-family: 'Helvetica Neue', Arial, sans-serif; }
         .input-field { transition: border-color 0.2s ease; }
         .input-field:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        
+        /* input[type=number] のデフォルトの矢印を非表示にする */
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type=number] {
+            -moz-appearance: textfield;
+        }
+        /* 増減ボタンのスタイル */
+        .spinner-btn {
+            cursor: pointer;
+            padding: 0.5rem;
+            width: 2.5rem; /* ボタンの幅を広くする */
+            height: 2.5rem; /* ボタンの高さを高くする */
+            font-size: 1.5rem; /* フォントサイズを大きくする */
+            line-height: 1;
+            text-align: center;
+            border: 1px solid #a9a9a9;
+            background-color: #a9a9a9;
+            color: #ffffff;
+            user-select: none; /* テキスト選択を防ぐ */
+            border-radius: 0.375rem;
+        }
+        .spinner-btn:active {
+            background-color: #e5e7eb;
+        }
     </style>
 </head>
 <body class="bg-gray-50 p-4">
     <div class="max-w-7xl mx-auto">
-        <h1 class="text-4xl font-bold text-center text-black mb-8"> <i class="fas fa-chart-line text-black mr-3"></i>ポートフォリオ分析・将来シミュレーションツール</h1>
-        
-        <!-- 投資期間選択 -->
+        <h1 class="text-3xl font-bold text-center text-white bg-blue-600 p-4 rounded-lg shadow-lg mb-8"> 
+            <i class="fas fa-chart-line mr-3"></i>ポートフォリオ分析・将来シミュレーションツール
+        </h1>
         <div class="settings-section border-2 rounded-lg p-6 mb-6 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-700"><i class="fas fa-edit mr-2"></i>投資設定</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">過去データ取得期間</label>
                     <select id="investmentPeriod" class="w-full p-2 border border-gray-300 rounded-md input-field">
@@ -44,18 +72,24 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">将来シミュレーション(年)</label>
-                    <input type="number" id="simulationYears" value="10" min="1" max="50" class="w-full p-2 border border-gray-300 rounded-md input-field">
+                    <div class="flex items-center space-x-2">
+                        <button class="spinner-btn" data-input-id="simulationYears" data-step="-1">-</button>
+                        <input type="number" id="simulationYears" value="10" min="1" max="50" class="w-full p-2 border border-gray-300 rounded-md input-field text-center">
+                        <button class="spinner-btn" data-input-id="simulationYears" data-step="1">+</button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">リスクフリーレート (%)</label>
-                    <input type="number" id="riskFreeRate" value="2.0" step="0.1" class="w-full p-2 border border-gray-300 rounded-md input-field">
+                     <div class="flex items-center space-x-2">
+                        <button class="spinner-btn" data-input-id="riskFreeRate" data-step="-0.1">-</button>
+                        <input type="number" id="riskFreeRate" value="2.0" step="0.1" class="w-full p-2 border border-gray-300 rounded-md input-field text-center">
+                        <button class="spinner-btn" data-input-id="riskFreeRate" data-step="0.1">+</button>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- ポートフォリオ比較セクション -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <!-- 現在のポートフォリオ -->
             <div class="current-portfolio border-2 rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-blue-600">
 		     <i class="fas fa-chart-pie text-blue-600 mr-2"></i> 現在のポートフォリオ
@@ -67,7 +101,6 @@
                 </div>
             </div>
 	 </div>
-            <!-- 改善ポートフォリオ -->
             <div class="improved-portfolio border-2 rounded-lg p-6 shadow-lg">
                 <h2 class="text-2xl font-bold mb-4 text-green-600">
 		<i class="fas fa-star mr-2"></i>改善ポートフォリオ</h2>
@@ -79,8 +112,7 @@
             </div>
         </div>
 	</div>
-        <!-- 円グラフ -->
-       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
     <div class="current-portfolio border-2 rounded-lg shadow-md p-6">
         <h3 class="text-2xl font-semibold mb-4 text-center text-blue-600">
 	<i class="fas fa-chart-pie text-blue-600 mr-2"></i>現在のポートフォリオ構成</h3>
@@ -96,7 +128,6 @@
         </div>
     </div>
 </div>
-        <!-- パフォーマンス評価 -->
         <div class="performance-section border-2 rounded-lg p-6 mb-6 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center text-red-600"><i class="fas fa-tachometer-alt text-orange-600 mr-2"></i> パフォーマンス評価</h2>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -167,7 +198,6 @@
             </div>
         </div>
 
-        <!-- 将来シミュレーション -->
         <div class="simulation-section border-2 rounded-lg p-6 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-800">
 	    <i class="fas fa-chart-bar mr-2"></i>将来シミュレーション</h2>
@@ -186,7 +216,6 @@
         </div>
     </div>
 
-    <!-- 免責事項 - 独立したセクションとして最下部に配置 -->
     <div class="max-w-7xl mx-auto">
         <div class="disclaimer-section rounded-lg p-8 shadow-xl">
             <h2 class="text-3xl font-bold mb-6 flex items-center text-yellow-600">
@@ -241,12 +270,14 @@
                 currentDiv.className = 'flex justify-between items-center';
                 currentDiv.innerHTML = `
                     <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1">
+                         <button class="spinner-btn" data-input-id="current-${index}" data-step="-10">-</button>
                         <input type="number" id="current-${index}" value="0" min="0" step="10" 
-                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm" 
+                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm text-center" 
                                onchange="updatePortfolio()">
+                        <button class="spinner-btn" data-input-id="current-${index}" data-step="10">+</button>
                         <span class="text-xs text-gray-500">万円</span>
-                        <span id="current-percent-${index}" class="text-xs text-gray-600 w-12">0.0%</span>
+                        <span id="current-percent-${index}" class="text-xs text-gray-600 w-12 text-right">0.0%</span>
                     </div>
                 `;
                 currentInputs.appendChild(currentDiv);
@@ -256,12 +287,14 @@
                 improvedDiv.className = 'flex justify-between items-center';
                 improvedDiv.innerHTML = `
                     <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
-                    <div class="flex items-center space-x-2">
+                    <div class="flex items-center space-x-1">
+                        <button class="spinner-btn" data-input-id="improved-${index}" data-step="-10">-</button>
                         <input type="number" id="improved-${index}" value="0" min="0" step="10" 
-                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm" 
+                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm text-center" 
                                onchange="updatePortfolio()">
+                        <button class="spinner-btn" data-input-id="improved-${index}" data-step="10">+</button>
                         <span class="text-xs text-gray-500">万円</span>
-                        <span id="improved-percent-${index}" class="text-xs text-gray-600 w-12">0.0%</span>
+                        <span id="improved-percent-${index}" class="text-xs text-gray-600 w-12 text-right">0.0%</span>
                     </div>
                 `;
                 improvedInputs.appendChild(improvedDiv);
@@ -290,40 +323,61 @@
             };
         }
 
-        // 将来価値計算
+       // 将来価値計算（対数正規分布モデル）
         function calculateFutureValues(amounts, periodIndex, years) {
             const portfolio = calculatePortfolio(amounts, periodIndex);
-            const total = amounts.reduce((sum, amount) => sum + amount, 0);
+            const total = amounts.reduce((sum, amount) => sum + amount, 0); // 投資元本
             
-            if (total === 0) return {
-                principal: 0, median: 0, mode: 0, mean: 0, upper30: 0, lower30: 0, lossProb: 0
-            };
+            if (total === 0) {
+                return { principal: 0, median: 0, mode: 0, mean: 0, upper30: 0, lower30: 0, lossProb: 0 };
+            }
 
-            const annualReturn = portfolio.return / 100;
-            const annualRisk = portfolio.risk / 100;
-            
-            // 複利計算
-            const meanValue = total * Math.pow(1 + annualReturn, years);
-            
-            // 正規分布仮定での計算
-            const variance = Math.pow(annualRisk * Math.sqrt(years), 2);
-            const stdDev = total * Math.sqrt(variance) * Math.pow(1 + annualReturn, years);
-            
-            // 分位点計算（正規分布近似）
-            const median = meanValue;
-            const mode = meanValue;
-            const upper30 = meanValue + 0.524 * stdDev; // 70パーセンタイル
-            const lower30 = meanValue - 0.524 * stdDev; // 30パーセンタイル
-            
-            // 元本割れ確率（正規分布仮定）
-            const z = (total - meanValue) / stdDev;
-            const lossProb = Math.max(0, Math.min(1, 0.5 * (1 + erf(z / Math.sqrt(2))))) * 100;
 
+            const n = years; // シミュレーション年数
+            const expectedReturn = portfolio.return / 100; // 期待リターン（小数）
+            const risk = portfolio.risk / 100; // リスク（小数）
+
+            // ステップ1: 対数正規分布のパラメータμとσを計算
+            const m = 1 + expectedReturn;
+            const s = risk;
+            const term = Math.pow(s / m, 2) + 1;
+
+            const mu = Math.log(m) - Math.log(term) / 2;
+            const sigma = Math.sqrt(Math.log(term));
+
+            // ステップ2: 各指標を計算
+            // 中央値 = 投資元本 * exp(nμ)
+            const median = total * Math.exp(n * mu);
+
+            // 平均値 = 投資元本 * exp(nμ + n(σ^2)/2)
+            const mean = total * Math.exp(n * mu + (n * Math.pow(sigma, 2)) / 2);
+
+            // 最頻値 = 投資元本 * exp(nμ - n(σ^2))
+            const mode = total * Math.exp(n * mu - n * Math.pow(sigma, 2));
+
+            // 上位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.7))
+            const normsinv_07 = 0.5244; // norm.s.inv(0.7)の近似値
+            const upper30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_07);
+
+            // 下位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.3))
+            const normsinv_03 = -0.5244; // norm.s.inv(0.3)の近似値
+            const lower30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_03);
+
+            // 元本割れする確率 = NORM.S.DIST(-μ*sqrt(n)/σ, TRUE)
+            let lossProb = 0;
+            if (sigma > 0) { // sigmaが0だとゼロ除算になるためチェック
+                const z = (-mu * Math.sqrt(n)) / sigma;
+                // 既存のerf関数を使ってNORM.S.DISTを計算
+                lossProb = 0.5 * (1 + erf(z / Math.sqrt(2)));
+            }
+            lossProb *= 100; // パーセントに変換
+
+        
             return {
                 principal: total,
                 median: median,
                 mode: mode,
-                mean: meanValue,
+                mean: mean,
                 upper30: upper30,
                 lower30: lower30,
                 lossProb: lossProb
@@ -553,17 +607,62 @@
             document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, (sharpe / maxSharpe) * 100)}%`;
         }
 
+        // ▼▼▼ JavaScriptを修正 ▼▼▼
+        // 増減ボタンのクリックイベント処理
+        document.addEventListener('click', function(event) {
+            if (event.target.classList.contains('spinner-btn')) {
+                const inputId = event.target.dataset.inputId;
+                const step = parseFloat(event.target.dataset.step);
+                const input = document.getElementById(inputId);
+
+                if (input) {
+                    const min = parseFloat(input.min) || 0;
+                    const max = parseFloat(input.max);
+                    let currentValue = parseFloat(input.value) || 0;
+                    let newValue = currentValue + step;
+
+                    // 小数点以下の桁数を合わせる
+                    const stepString = step.toString();
+                    if (stepString.includes('.')) {
+                        const decimalPlaces = stepString.split('.')[1].length;
+                        newValue = parseFloat(newValue.toFixed(decimalPlaces));
+                    }
+
+                    if (newValue < min) {
+                        newValue = min;
+                    }
+                    if (!isNaN(max) && newValue > max) {
+                        newValue = max;
+                    }
+
+                    // 対象がリスクフリーレートの場合、必ず小数点第一位まで表示する
+                    if (inputId === 'riskFreeRate') {
+                        input.value = newValue.toFixed(1);
+                    } else {
+                        input.value = newValue;
+                    }
+                    
+                    updatePortfolio(); // 値の変更後にメインの更新関数を呼び出す
+                }
+            }
+        });
+        // ▲▲▲ JavaScriptを修正 ▲▲▲
+
         // イベントリスナー
         document.getElementById('investmentPeriod').addEventListener('change', updatePortfolio);
-        document.getElementById('simulationYears').addEventListener('change', updatePortfolio);
-        document.getElementById('riskFreeRate').addEventListener('change', updatePortfolio);
+        document.getElementById('simulationYears').addEventListener('input', updatePortfolio); // inputイベントに変更
+        document.getElementById('riskFreeRate').addEventListener('input', updatePortfolio); // inputイベントに変更
 
         // 初期化
         createInputFields();
+        // リスクフリーレートの初期値をフォーマット
+        const riskFreeRateInput = document.getElementById('riskFreeRate');
+        riskFreeRateInput.value = parseFloat(riskFreeRateInput.value).toFixed(1);
+
         updatePortfolio();
     </script>
     <footer class="text-center text-gray-500 text-sm py-4 mt-8 border-t">
-        &copy; 2024 finbright. All Rights Reserved.
+        &copy; 2024 fpengineer. All Rights Reserved.
     </footer>
 </body>
 </html>
