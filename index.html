@@ -3,666 +3,361 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポートフォリオ分析・将来シミュレーションツール</title>
+    <title>ポートフォリオ分析ダッシュボード</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
-        .current-portfolio { background-color: #e7f3ff; border-color: #007bff; }
-        .improved-portfolio { background-color: #e8f5e8; border-color: #28a745; }
-        .performance-section { background-color: #fff5f5; border-color: #dc3545; }
-        .simulation-section { background-color: #f0f8ff; border-color: #6f42c1; }
-        .settings-section { background-color: #f5f5f5; border-color: #6c757d; }
-        .disclaimer-section { 
-            background-color: #fffbf0; 
-            border-color: #f59e0b; 
-            border: 3px solid #f59e0b;
-            margin-top: 2rem;
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
         }
-        .chart-container { height: 400px; }
-        .progress-bar { transition: width 0.3s ease; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; }
-        .input-field { transition: border-color 0.2s ease; }
-        .input-field:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
-        /* input[type=number] のデフォルトの矢印を非表示にする */
-        input::-webkit-outer-spin-button,
-        input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        input[type=number] {
-            -moz-appearance: textfield;
+        
+        .card-hover:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
-        /* 増減ボタンのスタイル */
-        .spinner-btn {
+        
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .slide-in-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .feature-icon {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+        
+        .nav-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
             cursor: pointer;
-            padding: 0.5rem;
-            width: 2.5rem; /* ボタンの幅を広くする */
-            height: 2.5rem; /* ボタンの高さを高くする */
-            font-size: 1.5rem; /* フォントサイズを大きくする */
-            line-height: 1;
-            text-align: center;
-            border: 1px solid #a9a9a9;
-            background-color: #a9a9a9;
-            color: #ffffff;
-            user-select: none; /* テキスト選択を防ぐ */
-            border-radius: 0.375rem;
+            position: relative;
+            overflow: hidden;
+            display: block; /* aタグをブロック要素として扱うために追加 */
+            text-decoration: none; /* aタグの下線を消すために追加 */
         }
-        .spinner-btn:active {
-            background-color: #e5e7eb;
+        
+        .nav-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .nav-card:hover::before {
+            left: 100%;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .navigation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 3rem 0;
+        }
+        
+        @media (max-width: 768px) {
+            .navigation-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 1rem;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-50 p-4">
-    <div class="max-w-7xl mx-auto">
-        <h1 class="text-3xl font-bold text-center text-white bg-blue-600 p-4 rounded-lg shadow-lg mb-8"> 
-            <i class="fas fa-chart-line mr-3"></i>ポートフォリオ分析・将来シミュレーションツール
-        </h1>
-        <div class="settings-section border-2 rounded-lg p-6 mb-6 shadow-lg">
-            <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-700"><i class="fas fa-edit mr-2"></i>投資設定</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">過去データ取得期間</label>
-                    <select id="investmentPeriod" class="w-full p-2 border border-gray-300 rounded-md input-field">
-                        <option value="0">5年</option>
-                        <option value="1">10年</option>
-                        <option value="2">20年</option>
-                    </select>
+<body>
+    <div class="min-h-screen py-8 px-4">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header Section -->
+            <header class="text-center mb-12 slide-in-up">
+                <div class="glass-effect rounded-3xl p-8 mb-8">
+                    <h1 class="text-5xl font-bold text-white mb-4">
+                        <i class="fas fa-chart-line mr-4"></i>
+                        ポートフォリオ分析ダッシュボード
+                    </h1>
+                    <p class="text-xl text-gray-200 max-w-3xl mx-auto leading-relaxed">
+                        投資ポートフォリオの分析、最適化、将来予測を統合したプロフェッショナルツール
+                    </p>
                 </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">将来シミュレーション(年)</label>
-                    <div class="flex items-center space-x-2">
-                        <button class="spinner-btn" data-input-id="simulationYears" data-step="-1">-</button>
-                        <input type="number" id="simulationYears" value="10" min="1" max="50" class="w-full p-2 border border-gray-300 rounded-md input-field text-center">
-                        <button class="spinner-btn" data-input-id="simulationYears" data-step="1">+</button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">リスクフリーレート (%)</label>
-                     <div class="flex items-center space-x-2">
-                        <button class="spinner-btn" data-input-id="riskFreeRate" data-step="-0.1">-</button>
-                        <input type="number" id="riskFreeRate" value="2.0" step="0.1" class="w-full p-2 border border-gray-300 rounded-md input-field text-center">
-                        <button class="spinner-btn" data-input-id="riskFreeRate" data-step="0.1">+</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+            </header>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-            <div class="current-portfolio border-2 rounded-lg p-6 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 text-blue-600">
-		     <i class="fas fa-chart-pie text-blue-600 mr-2"></i> 現在のポートフォリオ
-                </h2>
-                <div id="currentPortfolioInputs" class="space-y-3 mb-4"></div>
-		<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
-                <div class="text-lg font-semibold text-gray-700">
-                    投資総額: <span id="currentTotalAmount" class="text-blue-600">0</span> 万円
-                </div>
-            </div>
-	 </div>
-            <div class="improved-portfolio border-2 rounded-lg p-6 shadow-lg">
-                <h2 class="text-2xl font-bold mb-4 text-green-600">
-		<i class="fas fa-star mr-2"></i>改善ポートフォリオ</h2>
-                <div id="improvedPortfolioInputs" class="space-y-3 mb-4"></div>
-		<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
-                <div class="text-lg font-semibold text-gray-700">
-                    投資総額: <span id="improvedTotalAmount" class="text-green-600">0</span> 万円
-                </div>
-            </div>
-        </div>
-	</div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <div class="current-portfolio border-2 rounded-lg shadow-md p-6">
-        <h3 class="text-2xl font-semibold mb-4 text-center text-blue-600">
-	<i class="fas fa-chart-pie text-blue-600 mr-2"></i>現在のポートフォリオ構成</h3>
-        <div class="chart-container">
-            <canvas id="currentPieChart"></canvas>
-        </div>
-    </div>
-    <div class="improved-portfolio border-2 rounded-lg shadow-md p-6">
-        <h3 class="text-2xl font-semibold mb-4 text-center text-green-600">
-	<i class="fas fa-star mr-2"></i>改善ポートフォリオ構成</h3>
-        <div class="chart-container">
-            <canvas id="improvedPieChart"></canvas>
-        </div>
-    </div>
-</div>
-        <div class="performance-section border-2 rounded-lg p-6 mb-6 shadow-lg">
-            <h2 class="text-2xl font-bold mb-4 flex items-center text-red-600"><i class="fas fa-tachometer-alt text-orange-600 mr-2"></i> パフォーマンス評価</h2>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <h3 class="text-lg font-medium mb-3 text-blue-600"><i class="fas fa-chart-pie text-blue-600 mr-2"></i>現在のポートフォリオ</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">期待リターン</span>
-                                <span id="currentExpectedReturn" class="text-sm font-medium">0.00%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="currentReturnBar" class="bg-green-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">リスク</span>
-                                <span id="currentRisk" class="text-sm font-medium">0.00%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="currentRiskBar" class="bg-red-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">シャープレシオ</span>
-                                <span id="currentSharpe" class="text-sm font-medium">0.00</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="currentSharpeBar" class="bg-blue-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
+           
+            <!-- Main Navigation Cards -->
+            <section class="navigation-grid">
+                <!-- Card 1: ポートフォリオ分析・将来予測 -->
+                <a href="https://fpengineer.jp/simulation_portfolio_analysis.html" target="_blank" rel="noopener noreferrer" class="nav-card card-hover slide-in-up" style="animation-delay: 0.3s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-chart-pie text-2xl"></i>
                     </div>
-                </div>
-                <div>
-                    <h3 class="text-lg font-medium mb-3 text-green-600"> <i class="fas fa-star mr-2 text-green-600"></i>改善ポートフォリオ</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">期待リターン</span>
-                                <span id="improvedExpectedReturn" class="text-sm font-medium">0.00%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="improvedReturnBar" class="bg-green-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">リスク</span>
-                                <span id="improvedRisk" class="text-sm font-medium">0.00%</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="improvedRiskBar" class="bg-red-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between mb-1">
-                                <span class="text-sm font-medium">シャープレシオ</span>
-                                <span id="improvedSharpe" class="text-sm font-medium">0.00</span>
-                            </div>
-                            <div class="w-full bg-gray-200 rounded-full h-4">
-                                <div id="improvedSharpeBar" class="bg-blue-500 h-4 rounded-full progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
+                    <h3 class="text-2xl font-bold gradient-text mb-4">ポートフォリオ分析・将来予測</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        現在の投資ポートフォリオの詳細分析を実行。改善ポートフォリオとのパフォーマンス比較、将来シミュレーションを提供します。
+                    </p>
+                    <ul class="text-sm text-gray-500 mb-6 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>リスク・リターン分析</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>相関分析・VaR計算</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>セクター・地域配分</li>
+                    </ul>
+                    <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-full text-center font-semibold">
+                        分析を開始 <i class="fas fa-arrow-right ml-2"></i>
                     </div>
-                </div>
-            </div>
-        </div>
+                </a>
 
-        <div class="simulation-section border-2 rounded-lg p-6 shadow-lg">
-            <h2 class="text-2xl font-bold mb-4 flex items-center text-purple-800">
-	    <i class="fas fa-chart-bar mr-2"></i>将来シミュレーション</h2>
-            <div class="chart-container mb-4">
-                <canvas id="futureSimulationChart"></canvas>
-            </div>
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div class="text-center">
-		　　<div class="bg-white bg-opacity-50 p-3 rounded-md mb-4">
-                    <div class="font-medium text-black">元本割れ確率</div>
-                    <div class="text-lg font-bold">
-                        <span id="currentLossProb" class="text-blue-600">0.0%</span> / <span id="improvedLossProb" class="text-green-600">0.0%</span>
+                <!-- Card 2: ポートフォリオ最適化 -->
+                <a href="https://fpengineer.jp/simulation_portfolio_optimization.html" target="_blank" rel="noopener noreferrer" class="nav-card card-hover slide-in-up" style="animation-delay: 0.4s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-cogs text-2xl"></i>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                    <h3 class="text-2xl font-bold gradient-text mb-4">ポートフォリオ最適化</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        現代ポートフォリオ理論に基づく最適化アルゴリズム。リスク許容度別・目標リターン別にシャープレシオが最大化する最適な資産配分を提案します。
+                    </p>
+                    <ul class="text-sm text-gray-500 mb-6 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>効率的フロンティア計算</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>複数最適化手法</li>
+                    </ul>
+                    <div class="bg-gradient-to-r from-green-500 to-blue-600 text-white px-6 py-3 rounded-full text-center font-semibold">
+                        最適化実行 <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
+                </a>
 
-    <div class="max-w-7xl mx-auto">
-        <div class="disclaimer-section rounded-lg p-8 shadow-xl">
-            <h2 class="text-3xl font-bold mb-6 flex items-center text-yellow-600">
-                <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>免責事項
-            </h2>
-            <div class="text-sm text-gray-700 space-y-1 leading-tight">
-                <p>※本シミュレーションは、将来の運用成果を保証するものではありません。過去のデータ等に基づいて試算を行っており、シミュレーション結果と実際の結果が一致しない場合があります。また、入力された取引と同様の取引を実際に行った場合でも、シミュレーションで表示される結果と実際の結果が一致するとは限りません。</p>
-                <p>※本シミュレーションでは、税金や手数料等は考慮しておりません。</p>
-                <p>※本シミュレーションおよび掲載情報の利用により生じたいかなる損害（直接的・間接的を問わず）についても、当社は一切の責任を負いません。実際の資産運用や投資判断は、必ずご自身の責任において行ってください。</p>
-                <p>※当社は、お客様が本シミュレーションを利用したことにより生じた結果について、一切の責任を負いません。また、本シミュレーションは簡易的な計算方法を用いており、その正確性および完全性を保証するものではありません。なお、シミュレーション内容は予告なく変更する場合があります。</p>
-                <p>※ご入力いただいた情報は、本シミュレーション以外には使用せず、当社で取得・蓄積することもありません。</p>
-                <p>※本シミュレーションはJavaScriptを使用しています。JavaScriptが無効になっている場合、正しく動作しないことがありますので、有効に設定のうえご利用ください。</p>
-            </div>
+                <!-- Card 3: 3大資金シミュレーション -->
+                <a href="https://fpengineer.jp/simulation_three_major_life_expenses.html" target="_blank" rel="noopener noreferrer" class="nav-card card-hover slide-in-up" style="animation-delay: 0.5s;">
+                    <div class="feature-icon">
+                        <i class="fas fa-calculator text-2xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold gradient-text mb-4">3大資金シミュレーション</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        教育資金・住宅取得資金・老後資金の不足額と必要積立金額、必要積立運用金額のシミュレーションを提供します。
+                    </p>
+                    <ul class="text-sm text-gray-500 mb-6 space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>モンテカルロ分析</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>ストレステスト</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>確率分布可視化</li>
+                    </ul>
+                    <div class="bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-full text-center font-semibold">
+                        シミュレーション開始 <i class="fas fa-arrow-right ml-2"></i>
+                    </div>
+                </a>
+            </section>
+
+          
+            <!-- Footer -->
+            <footer class="text-center mt-12 text-gray-300 slide-in-up" style="animation-delay: 0.8s;">
+                <div class="glass-effect rounded-2xl p-6">
+                    <p>&copy; 2025 Portfolio Analysis Dashboard. All rights reserved.</p>
+                    <p class="text-sm mt-2">Powered by Fp Engineering</p>
+                </div>
+            </footer>
         </div>
     </div>
 
     <script>
-        const assets = [
-            { name: "現金", returns: [0, 7.8, 0], risks: [0, 14.5, 0] },
-            { name: "国内株式", returns: [15.1, 7.8, 6.8], risks: [12.1, 14.5, 16.7] },
-            { name: "米国株式", returns: [22.4, 14.2, 11.9], risks: [16.1, 17.3, 18.3] },
-            { name: "先進国株式", returns: [22.4, 12.6, 10.8], risks: [15.6, 17.0, 18.8] },
-            { name: "新興国株式", returns: [14.3, 6.0, 8.2], risks: [16.2, 17.5, 22.3] },
-            { name: "世界株式", returns: [12.5, 9.66, 9.0], risks: [15.68, 15.68, 14.68] },
-            { name: "国内債券", returns: [-2.2, -0.5, 0.7], risks: [2.5, 2.3, 2.1] },
-            { name: "米国債", returns: [2.73, 1.5, 4.5], risks: [6.0, 6.0, 5.0] },
-            { name: "先進国債券", returns: [4.3, 2.2, 3.8], risks: [6.4, 6.7, 8.5] },
-            { name: "新興国債券", returns: [8.4, 4.6, 6.8], risks: [9.7, 10.2, 11.5] },
-            { name: "国内REIT", returns: [4.7, 3.3, 5.0], risks: [10.4, 12.3, 17.5] },
-            { name: "先進国REIT", returns: [14.7, 6.4, 7.4], risks: [17.4, 18.0, 21.6] },
-            { name: "新興国REIT", returns: [17.5, 1.3, 6.3], risks: [14.7, 21.0, 22.6] },
-            { name: "金", returns: [20.9, 12.4, 12.5], risks: [15.5, 13.4, 16.7] },
-            { name: "コモディティ", returns: [19.7, 3.5, 1.1], risks: [18.1, 17.1, 18.5] }
-        ];
+        // Navigation Functions (現在はキーボードショートカットでのみ使用)
+        function navigateToAnalysis() {
+            window.open('https://fpengineer.jp/simulation_portfolio_analysis.html', '_blank');
+        }
 
-        const colors = [
-            '#FF6666', '#FF99CC', '#99CCFF', '#A3BFFF', '#80FFCC',
-            '#66D9EF', '#FF9999', '#B266FF', '#CC99FF', '#99FFCC',
-            '#FFB380', '#FFCC99', '#FF99A8', '#FFFF99', '#C2E17F'
-        ];
+        function navigateToOptimization() {
+            window.open('https://fpengineer.jp/simulation_portfolio_optimization.html', '_blank');
+        }
 
-        let currentPieChart, improvedPieChart, futureChart;
+        function navigateToSimulation() {
+            window.open('https://fpengineer.jp/simulation_three_major_life_expenses.html', '_blank');
+        }
 
-        // 入力フィールドの生成
-        function createInputFields() {
-            const currentInputs = document.getElementById('currentPortfolioInputs');
-            const improvedInputs = document.getElementById('improvedPortfolioInputs');
+        function navigateToExternal() {
+            window.open('https://fpengineer.jp/', '_blank');
+        }
 
-            assets.forEach((asset, index) => {
-                // 現在のポートフォリオ
-                const currentDiv = document.createElement('div');
-                currentDiv.className = 'flex justify-between items-center';
-                currentDiv.innerHTML = `
-                    <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
-                    <div class="flex items-center space-x-1">
-                         <button class="spinner-btn" data-input-id="current-${index}" data-step="-10">-</button>
-                        <input type="number" id="current-${index}" value="0" min="0" step="10" 
-                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm text-center" 
-                               onchange="updatePortfolio()">
-                        <button class="spinner-btn" data-input-id="current-${index}" data-step="10">+</button>
-                        <span class="text-xs text-gray-500">万円</span>
-                        <span id="current-percent-${index}" class="text-xs text-gray-600 w-12 text-right">0.0%</span>
+        // Loading Overlay Functions (現在は未使用ですが、将来的な機能拡張のために残しています)
+        function showLoadingOverlay() {
+            const overlay = document.createElement('div');
+            overlay.id = 'loadingOverlay';
+            overlay.innerHTML = `
+                <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                    <div style="background: white; padding: 2rem; border-radius: 15px; text-align: center;">
+                        <div class="pulse-animation" style="font-size: 3rem; margin-bottom: 1rem;">📊</div>
+                        <div style="font-size: 1.2rem; font-weight: bold; color: #333;">読み込み中...</div>
                     </div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+        }
+
+        function hideLoadingOverlay() {
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        // Initialize animations on scroll
+        function initScrollAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            });
+
+            document.querySelectorAll('.slide-in-up').forEach((el) => {
+                observer.observe(el);
+            });
+        }
+
+        // Particle effect for background
+        function createParticles() {
+            const particleContainer = document.createElement('div');
+            particleContainer.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                pointer-events: none;
+                z-index: -1;
+            `;
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: absolute;
+                    width: 2px;
+                    height: 2px;
+                    background: rgba(255, 255, 255, 0.3);
+                    border-radius: 50%;
+                    animation: float ${5 + Math.random() * 10}s infinite linear;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
                 `;
-                currentInputs.appendChild(currentDiv);
-
-                // 改善ポートフォリオ
-                const improvedDiv = document.createElement('div');
-                improvedDiv.className = 'flex justify-between items-center';
-                improvedDiv.innerHTML = `
-                    <label class="text-sm font-medium text-gray-700 w-24">${asset.name}</label>
-                    <div class="flex items-center space-x-1">
-                        <button class="spinner-btn" data-input-id="improved-${index}" data-step="-10">-</button>
-                        <input type="number" id="improved-${index}" value="0" min="0" step="10" 
-                               class="w-20 p-1 border border-gray-300 rounded input-field text-sm text-center" 
-                               onchange="updatePortfolio()">
-                        <button class="spinner-btn" data-input-id="improved-${index}" data-step="10">+</button>
-                        <span class="text-xs text-gray-500">万円</span>
-                        <span id="improved-percent-${index}" class="text-xs text-gray-600 w-12 text-right">0.0%</span>
-                    </div>
-                `;
-                improvedInputs.appendChild(improvedDiv);
-            });
-        }
-
-        // ポートフォリオ計算
-        function calculatePortfolio(amounts, periodIndex) {
-            const total = amounts.reduce((sum, amount) => sum + amount, 0);
-            if (total === 0) return { return: 0, risk: 0, weights: new Array(assets.length).fill(0) };
-
-            const weights = amounts.map(amount => amount / total);
+                particleContainer.appendChild(particle);
+            }
             
-            let portfolioReturn = 0;
-            let portfolioVariance = 0;
-
-            weights.forEach((weight, i) => {
-                portfolioReturn += weight * assets[i].returns[periodIndex];
-                portfolioVariance += Math.pow(weight * assets[i].risks[periodIndex], 2);
-            });
-
-            return {
-                return: portfolioReturn,
-                risk: Math.sqrt(portfolioVariance),
-                weights: weights
-            };
+            document.body.appendChild(particleContainer);
         }
 
-       // 将来価値計算（対数正規分布モデル）
-        function calculateFutureValues(amounts, periodIndex, years) {
-            const portfolio = calculatePortfolio(amounts, periodIndex);
-            const total = amounts.reduce((sum, amount) => sum + amount, 0); // 投資元本
+        // Add floating animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes float {
+                0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+                10% { opacity: 1; }
+                90% { opacity: 1; }
+                100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize on load
+        document.addEventListener('DOMContentLoaded', () => {
+            initScrollAnimations();
+            createParticles();
             
-            if (total === 0) {
-                return { principal: 0, median: 0, mode: 0, mean: 0, upper30: 0, lower30: 0, lossProb: 0 };
-            }
-
-
-            const n = years; // シミュレーション年数
-            const expectedReturn = portfolio.return / 100; // 期待リターン（小数）
-            const risk = portfolio.risk / 100; // リスク（小数）
-
-            // ステップ1: 対数正規分布のパラメータμとσを計算
-            const m = 1 + expectedReturn;
-            const s = risk;
-            const term = Math.pow(s / m, 2) + 1;
-
-            const mu = Math.log(m) - Math.log(term) / 2;
-            const sigma = Math.sqrt(Math.log(term));
-
-            // ステップ2: 各指標を計算
-            // 中央値 = 投資元本 * exp(nμ)
-            const median = total * Math.exp(n * mu);
-
-            // 平均値 = 投資元本 * exp(nμ + n(σ^2)/2)
-            const mean = total * Math.exp(n * mu + (n * Math.pow(sigma, 2)) / 2);
-
-            // 最頻値 = 投資元本 * exp(nμ - n(σ^2))
-            const mode = total * Math.exp(n * mu - n * Math.pow(sigma, 2));
-
-            // 上位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.7))
-            const normsinv_07 = 0.5244; // norm.s.inv(0.7)の近似値
-            const upper30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_07);
-
-            // 下位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.3))
-            const normsinv_03 = -0.5244; // norm.s.inv(0.3)の近似値
-            const lower30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_03);
-
-            // 元本割れする確率 = NORM.S.DIST(-μ*sqrt(n)/σ, TRUE)
-            let lossProb = 0;
-            if (sigma > 0) { // sigmaが0だとゼロ除算になるためチェック
-                const z = (-mu * Math.sqrt(n)) / sigma;
-                // 既存のerf関数を使ってNORM.S.DISTを計算
-                lossProb = 0.5 * (1 + erf(z / Math.sqrt(2)));
-            }
-            lossProb *= 100; // パーセントに変換
-
-        
-            return {
-                principal: total,
-                median: median,
-                mode: mode,
-                mean: mean,
-                upper30: upper30,
-                lower30: lower30,
-                lossProb: lossProb
-            };
-        }
-
-        // エラー関数の近似
-        function erf(x) {
-            const a1 =  0.254829592;
-            const a2 = -0.284496736;
-            const a3 =  1.421413741;
-            const a4 = -1.453152027;
-            const a5 =  1.061405429;
-            const p  =  0.3275911;
-
-            const sign = x >= 0 ? 1 : -1;
-            x = Math.abs(x);
-
-            const t = 1.0 / (1.0 + p * x);
-            const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
-
-            return sign * y;
-        }
-
-        // 円グラフ更新
-        function updatePieChart(chartId, amounts, title) {
-            const ctx = document.getElementById(chartId).getContext('2d');
-            const total = amounts.reduce((sum, amount) => sum + amount, 0);
-            
-            if (chartId === 'currentPieChart' && currentPieChart) {
-                currentPieChart.destroy();
-            }
-            if (chartId === 'improvedPieChart' && improvedPieChart) {
-                improvedPieChart.destroy();
-            }
-
-            const validData = [];
-            const validLabels = [];
-            const validColors = [];
-
-            amounts.forEach((amount, index) => {
-                if (amount > 0) {
-                    validData.push(amount);
-                    validLabels.push(`${assets[index].name} (${(amount/total*100).toFixed(1)}%)`);
-                    validColors.push(colors[index]);
-                }
+            // Add hover effects for cards
+            document.querySelectorAll('.nav-card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    card.style.transform = 'translateY(-8px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'translateY(0) scale(1)';
+                });
             });
+        });
 
-            const config = {
-                type: 'doughnut',
-                data: {
-                    labels: validLabels,
-                    datasets: [{
-                        data: validData,
-                        backgroundColor: validColors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 10 }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: title,
-                            font: { size: 14 }
-                        }
-                    }
-                }
-            };
-
-            if (chartId === 'currentPieChart') {
-                currentPieChart = new Chart(ctx, config);
-            } else {
-                improvedPieChart = new Chart(ctx, config);
-            }
-        }
-
-        // 棒グラフ更新
-        function updateBarChart(currentFuture, improvedFuture) {
-            const ctx = document.getElementById('futureSimulationChart').getContext('2d');
-            
-            if (futureChart) {
-                futureChart.destroy();
-            }
-
-            const labels = ['投資元本', '中央値', '最頻値', '平均値', '上位30%', '下位30%'];
-            const currentData = [
-                currentFuture.principal, currentFuture.median, currentFuture.mode,
-                currentFuture.mean, currentFuture.upper30, currentFuture.lower30
-            ];
-            const improvedData = [
-                improvedFuture.principal, improvedFuture.median, improvedFuture.mode,
-                improvedFuture.mean, improvedFuture.upper30, improvedFuture.lower30
-            ];
-
-            futureChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        {
-                            label: '現在のポートフォリオ',
-                            data: currentData,
-                            backgroundColor: 'rgba(59, 130, 246, 0.7)',
-                            borderColor: 'rgba(59, 130, 246, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: '改善ポートフォリオ',
-                            data: improvedData,
-                            backgroundColor: 'rgba(34, 197, 94, 0.7)',
-                            borderColor: 'rgba(34, 197, 94, 1)',
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return value.toLocaleString() + '万円';
-                                }
-                            }
-                        }
-                    },
-                    plugins: {
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '万円';
-                                }
-                            }
-                        },
-                        title: {
-                            display: true,
-                            text: '将来シミュレーション結果',
-                            font: { size: 16 }
-                        }
-                    }
-                }
-            });
-        }
-
-        // メイン更新関数
-        function updatePortfolio() {
-            const periodIndex = parseInt(document.getElementById('investmentPeriod').value);
-            const years = parseInt(document.getElementById('simulationYears').value);
-            const riskFreeRate = parseFloat(document.getElementById('riskFreeRate').value);
-
-            // 投資額取得
-            const currentAmounts = assets.map((_, index) => 
-                parseFloat(document.getElementById(`current-${index}`).value) || 0
-            );
-            const improvedAmounts = assets.map((_, index) => 
-                parseFloat(document.getElementById(`improved-${index}`).value) || 0
-            );
-
-            // 合計額計算
-            const currentTotal = currentAmounts.reduce((sum, amount) => sum + amount, 0);
-            const improvedTotal = improvedAmounts.reduce((sum, amount) => sum + amount, 0);
-
-            document.getElementById('currentTotalAmount').textContent = currentTotal.toLocaleString();
-            document.getElementById('improvedTotalAmount').textContent = improvedTotal.toLocaleString();
-
-            // パーセンテージ更新
-            currentAmounts.forEach((amount, index) => {
-                const percent = currentTotal > 0 ? (amount / currentTotal * 100).toFixed(1) : 0;
-                document.getElementById(`current-percent-${index}`).textContent = `${percent}%`;
-            });
-            improvedAmounts.forEach((amount, index) => {
-                const percent = improvedTotal > 0 ? (amount / improvedTotal * 100).toFixed(1) : 0;
-                document.getElementById(`improved-percent-${index}`).textContent = `${percent}%`;
-            });
-
-            // ポートフォリオ計算
-            const currentPortfolio = calculatePortfolio(currentAmounts, periodIndex);
-            const improvedPortfolio = calculatePortfolio(improvedAmounts, periodIndex);
-
-            // シャープレシオ計算
-            const currentSharpe = currentPortfolio.risk > 0 ? (currentPortfolio.return - riskFreeRate) / currentPortfolio.risk : 0;
-            const improvedSharpe = improvedPortfolio.risk > 0 ? (improvedPortfolio.return - riskFreeRate) / improvedPortfolio.risk : 0;
-
-            // パフォーマンス表示更新
-            updatePerformanceDisplay('current', currentPortfolio.return, currentPortfolio.risk, currentSharpe);
-            updatePerformanceDisplay('improved', improvedPortfolio.return, improvedPortfolio.risk, improvedSharpe);
-
-            // グラフ更新
-            updatePieChart('currentPieChart', currentAmounts,);
-            updatePieChart('improvedPieChart', improvedAmounts,);
-
-            // 将来価値計算
-            const currentFuture = calculateFutureValues(currentAmounts, periodIndex, years);
-            const improvedFuture = calculateFutureValues(improvedAmounts, periodIndex, years);
-
-            updateBarChart(currentFuture, improvedFuture);
-
-            // 元本割れ確率表示
-            document.getElementById('currentLossProb').textContent = `${currentFuture.lossProb.toFixed(1)}%`;
-            document.getElementById('improvedLossProb').textContent = `${improvedFuture.lossProb.toFixed(1)}%`;
-        }
-
-        function updatePerformanceDisplay(type, expectedReturn, risk, sharpe) {
-            document.getElementById(`${type}ExpectedReturn`).textContent = `${expectedReturn.toFixed(2)}%`;
-            document.getElementById(`${type}Risk`).textContent = `${risk.toFixed(2)}%`;
-            document.getElementById(`${type}Sharpe`).textContent = sharpe.toFixed(2);
-
-            // プログレスバー更新（最大値を適切に設定）
-            const maxReturn = 25;
-            const maxRisk = 25;
-            const maxSharpe = 2;
-
-            document.getElementById(`${type}ReturnBar`).style.width = `${Math.min(100, (expectedReturn / maxReturn) * 100)}%`;
-            document.getElementById(`${type}RiskBar`).style.width = `${Math.min(100, (risk / maxRisk) * 100)}%`;
-            document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, (sharpe / maxSharpe) * 100)}%`;
-        }
-
-        // ▼▼▼ JavaScriptを修正 ▼▼▼
-        // 増減ボタンのクリックイベント処理
-        document.addEventListener('click', function(event) {
-            if (event.target.classList.contains('spinner-btn')) {
-                const inputId = event.target.dataset.inputId;
-                const step = parseFloat(event.target.dataset.step);
-                const input = document.getElementById(inputId);
-
-                if (input) {
-                    const min = parseFloat(input.min) || 0;
-                    const max = parseFloat(input.max);
-                    let currentValue = parseFloat(input.value) || 0;
-                    let newValue = currentValue + step;
-
-                    // 小数点以下の桁数を合わせる
-                    const stepString = step.toString();
-                    if (stepString.includes('.')) {
-                        const decimalPlaces = stepString.split('.')[1].length;
-                        newValue = parseFloat(newValue.toFixed(decimalPlaces));
-                    }
-
-                    if (newValue < min) {
-                        newValue = min;
-                    }
-                    if (!isNaN(max) && newValue > max) {
-                        newValue = max;
-                    }
-
-                    // 対象がリスクフリーレートの場合、必ず小数点第一位まで表示する
-                    if (inputId === 'riskFreeRate') {
-                        input.value = newValue.toFixed(1);
-                    } else {
-                        input.value = newValue;
-                    }
-                    
-                    updatePortfolio(); // 値の変更後にメインの更新関数を呼び出す
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        navigateToAnalysis();
+                        break;
+                    case '2':
+                        navigateToOptimization();
+                        break;
+                    case '3':
+                        navigateToSimulation();
+                        break;
+                    case '4':
+                        navigateToExternal();
+                        break;
                 }
             }
         });
-        // ▲▲▲ JavaScriptを修正 ▲▲▲
-
-        // イベントリスナー
-        document.getElementById('investmentPeriod').addEventListener('change', updatePortfolio);
-        document.getElementById('simulationYears').addEventListener('input', updatePortfolio); // inputイベントに変更
-        document.getElementById('riskFreeRate').addEventListener('input', updatePortfolio); // inputイベントに変更
-
-        // 初期化
-        createInputFields();
-        // リスクフリーレートの初期値をフォーマット
-        const riskFreeRateInput = document.getElementById('riskFreeRate');
-        riskFreeRateInput.value = parseFloat(riskFreeRateInput.value).toFixed(1);
-
-        updatePortfolio();
     </script>
-    <footer class="text-center text-gray-500 text-sm py-4 mt-8 border-t">
-        &copy; 2024 fpengineer. All Rights Reserved.
-    </footer>
 </body>
 </html>
