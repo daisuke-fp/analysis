@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ポートフォリオ最適化ツール - リスク許容度修正版</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        .settings-panel {
+            transition: all 0.3s ease;
+        }
+        .asset-checkbox:checked + label {
+            background-color: #dbeafe;
+            border-color: #3b82f6;
+            color: #1e40af;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #d1d5db;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+        }
+        .toggle-btn {
+            transition: all 0.3s ease;
+        }
+        .toggle-btn.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .result-card {
+            transition: all 0.3s ease;
+        }
+        .result-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .allocation-bar {
+            height: 24px;
+            transition: width 1s ease-out;
+        }
+        .settings-section {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .accordion-content.active {
+            max-height: 500px;
+        }
+        @keyframes pulse {
+            0% { opacity: 0.6; }
+            50% { opacity: 1; }
+            100% { opacity: 0.6; }
+        }
+        .loading-pulse {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4">
+    <div class="container mx-auto bg-white rounded-lg shadow-lg overflow-hidden">
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 p-4 text-white">
+            <h1 class="text-2xl font-bold flex items-center">
+                <i class="fas fa-chart-pie mr-2"></i>ポートフォリオ最適化ツール
+            </h1>
+            <p class="text-sm opacity-80">シャープレシオを最大化する最適な資産配分を算出します</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row">
+            <div class="settings-panel w-full md:w-1/3 lg:w-1/4 p-3 border-r border-gray-200">
+                <div class="mb-2 p-2 bg-gray-50 rounded shadow-sm">
+                    <h3 class="text-sm font-semibold mb-1 flex items-center">
+                        <i class="fas fa-calendar-alt mr-1 text-blue-600"></i>期間選択
+                    </h3>
+                    <div class="flex space-x-1">
+                        <button id="period-5" class="toggle-btn flex-1 py-1 px-2 text-xs text-center border rounded active">5年</button>
+                        <button id="period-10" class="toggle-btn flex-1 py-1 px-2 text-xs text-center border rounded">10年</button>
+                        <button id="period-20" class="toggle-btn flex-1 py-1 px-2 text-xs text-center border rounded">20年</button>
+                    </div>
+                </div>
+
+                <div class="mb-2 p-2 bg-gray-50 rounded shadow-sm">
+                    <div class="accordion-header cursor-pointer flex items-center justify-between">
+                        <h3 class="text-sm font-semibold flex items-center">
+                            <i class="fas fa-coins mr-1 text-blue-600"></i>対象資産選択
+                        </h3>
+                        <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                    </div>
+                    <div class="accordion-content settings-section">
+                        <div class="my-2 text-xs">
+                            <button id="select-all" class="py-1 px-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded text-xs mb-1">
+                                <i class="fas fa-check-double mr-1"></i>全て選択
+                            </button>
+                            <button id="clear-all" class="py-1 px-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-xs ml-1 mb-1">
+                                <i class="fas fa-times mr-1"></i>クリア
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-1">
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-cash" class="asset-checkbox hidden" checked>
+                                <label for="asset-cash" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">現金</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-domestic-stock" class="asset-checkbox hidden" checked>
+                                <label for="asset-domestic-stock" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">国内株式</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-us-stock" class="asset-checkbox hidden" checked>
+                                <label for="asset-us-stock" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">米国株式</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-developed-stock" class="asset-checkbox hidden" checked>
+                                <label for="asset-developed-stock" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">先進国株式</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-emerging-stock" class="asset-checkbox hidden" checked>
+                                <label for="asset-emerging-stock" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">新興国株式</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-world-stock" class="asset-checkbox hidden" checked>
+                                <label for="asset-world-stock" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">世界株式</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-domestic-bond" class="asset-checkbox hidden" checked>
+                                <label for="asset-domestic-bond" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">国内債券</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-us-bond" class="asset-checkbox hidden" checked>
+                                <label for="asset-us-bond" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">米国債</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-developed-bond" class="asset-checkbox hidden" checked>
+                                <label for="asset-developed-bond" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">先進国債券</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-emerging-bond" class="asset-checkbox hidden" checked>
+                                <label for="asset-emerging-bond" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">新興国債券</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-domestic-reit" class="asset-checkbox hidden" checked>
+                                <label for="asset-domestic-reit" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">国内REIT</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-developed-reit" class="asset-checkbox hidden" checked>
+                                <label for="asset-developed-reit" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">先進国REIT</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-emerging-reit" class="asset-checkbox hidden" checked>
+                                <label for="asset-emerging-reit" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">新興国REIT</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-gold" class="asset-checkbox hidden" checked>
+                                <label for="asset-gold" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">金</label>
+                            </div>
+                            <div class="asset-item">
+                                <input type="checkbox" id="asset-commodity" class="asset-checkbox hidden" checked>
+                                <label for="asset-commodity" class="block text-xs py-1 px-2 border rounded cursor-pointer text-center transition-colors">コモディティ</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-2 p-2 bg-gray-50 rounded shadow-sm">
+                    <h3 class="text-sm font-semibold mb-1 flex items-center">
+                        <i class="fas fa-sliders-h mr-1 text-blue-600"></i>最適化モード
+                    </h3>
+                    <div class="flex flex-col space-y-1">
+                        <div class="flex">
+                            <button id="mode-risk" class="toggle-btn flex-1 py-1 px-2 text-xs border rounded active">リスク許容度別</button>
+                            <button id="mode-return" class="toggle-btn flex-1 py-1 px-2 text-xs border rounded">目標リターン別</button>
+                        </div>
+                        
+                        <div id="risk-tolerance-container" class="mt-1">
+                            <div class="text-xs mb-1">リスク許容度:</div>
+                            <div class="flex space-x-1">
+                                <button id="risk-low" class="toggle-btn flex-1 py-1 px-2 text-xs border rounded active">低</button>
+                                <button id="risk-medium" class="toggle-btn flex-1 py-1 px-2 text-xs border rounded">中</button>
+                                <button id="risk-high" class="toggle-btn flex-1 py-1 px-2 text-xs border rounded">高</button>
+                            </div>
+                            <div class="text-xs mt-1 text-gray-500">
+                                <span id="risk-description">低: リスク0%～10%</span>
+                            </div>
+                        </div>
+                        
+                        <div id="target-return-container" class="mt-1 hidden">
+                            <div class="text-xs mb-1">目標リターン: <span id="target-return-value">5.0</span>%</div>
+                            <input type="range" min="0" max="25" value="5" step="0.1" class="slider" id="target-return-slider">
+                            <div class="flex justify-between text-xs text-gray-500">
+                                <span>0%</span>
+                                <span>25%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="optimize-button" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow transition-colors">
+                    <i class="fas fa-calculator mr-1"></i>最適化実行
+                </button>
+            </div>
+
+            <div class="w-full md:w-2/3 lg:w-3/4 p-4">
+                <div id="results-container" class="hidden">
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <div class="w-full md:w-1/2">
+                            <div class="bg-white rounded-lg shadow p-4 h-full">
+                                <h3 class="text-lg font-semibold mb-3 text-gray-800">最適ポートフォリオ</h3>
+                                <div class="aspect-square w-full" style="height: 300px;">
+                                    <canvas id="portfolio-pie-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="w-full md:w-1/2">
+                            <div class="bg-white rounded-lg shadow p-4 h-full">
+                                <h3 class="text-lg font-semibold mb-3 text-gray-800">パフォーマンス指標</h3>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div class="result-card bg-blue-50 rounded-lg p-3">
+                                        <div class="text-sm text-blue-700 font-semibold">期待リターン</div>
+                                        <div class="text-3xl font-bold text-blue-800" id="result-return">-</div>
+                                        <div class="text-xs text-blue-600">年率 (%)</div>
+                                    </div>
+                                    <div class="result-card bg-red-50 rounded-lg p-3">
+                                        <div class="text-sm text-red-700 font-semibold">リスク</div>
+                                        <div class="text-3xl font-bold text-red-800" id="result-risk">-</div>
+                                        <div class="text-xs text-red-600">標準偏差 (%)</div>
+                                    </div>
+                                    <div class="result-card bg-green-50 rounded-lg p-3">
+                                        <div class="text-sm text-green-700 font-semibold">シャープレシオ</div>
+                                        <div class="text-3xl font-bold text-green-800" id="result-sharpe">-</div>
+                                        <div class="text-xs text-green-600">リスク調整後リターン</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow p-4">
+                        <h3 class="text-lg font-semibold mb-3 text-gray-800">詳細な資産配分</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="py-2 px-4 text-left">資産クラス</th>
+                                        <th class="py-2 px-4 text-right">配分比率 (%)</th>
+                                        <th class="py-2 px-4 text-right">期待リターン (%)</th>
+                                        <th class="py-2 px-4 text-right">リスク (%)</th>
+                                        <th class="py-2 px-4 hidden md:table-cell">配分比率</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="allocation-table-body">
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="initial-message" class="flex flex-col items-center justify-center h-96">
+                    <i class="fas fa-chart-line text-5xl mb-4 text-gray-300"></i>
+                    <p class="text-xl text-gray-500 text-center">パラメーターを設定して「最適化実行」をクリックしてください</p>
+                </div>
+
+                <div id="error-message" class="hidden flex flex-col items-center justify-center h-96">
+                    <i class="fas fa-exclamation-triangle text-5xl mb-4 text-yellow-500"></i>
+                    <p class="text-xl text-red-500 text-center" id="error-text">設定におけるシャープレシオが最大となるポートフォリオは存在しません</p>
+                    <p class="text-sm text-gray-500 mt-2">異なる資産の組み合わせや制約条件を試してください</p>
+                </div>
+
+                <div id="loading-message" class="hidden flex flex-col items-center justify-center h-96">
+                    <i class="fas fa-spinner fa-spin text-5xl mb-4 text-blue-500 loading-pulse"></i>
+                    <p class="text-xl text-gray-600 text-center">最適なポートフォリオを計算中...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container mx-auto mt-4 p-6 bg-white rounded-lg shadow-lg text-xs text-gray-600">
+        <div class="max-w-4xl mx-auto text-left space-y-2">
+            <h4 class="font-bold text-sm text-gray-800 mb-3">免責事項</h4>
+            <p>※本シミュレーションは、将来の運用成果を保証するものではありません。過去のデータ等に基づいて試算を行っており、シミュレーション結果と実際の結果が一致しない場合があります。また、入力された取引と同様の取引を実際に行った場合でも、シミュレーションで表示される結果と実際の結果が一致するとは限りません。</p>
+            <p>※本シミュレーションでは、税金や手数料等は考慮しておりません。</p>
+            <p>※本シミュレーションおよび掲載情報の利用により生じたいかなる損害（直接的・間接的を問わず）についても、当社は一切の責任を負いません。実際の資産運用や投資判断は、必ずご自身の責任において行ってください。</p>
+            <p>※当社は、お客様が本シミュレーションを利用したことにより生じた結果について、一切の責任を負いません。また、本シミュレーションは簡易的な計算方法を用いており、その正確性および完全性を保証するものではありません。なお、シミュレーション内容は予告なく変更する場合があります。</p>
+            <p>※ご入力いただいた情報は、本シミュレーション以外には使用せず、当社で取得・蓄積することもありません。</p>
+            <p>※本シミュレーションはJavaScriptを使用しています。JavaScriptが無効になっている場合、正しく動作しないことがありますので、有効に設定のうえご利用ください。</p>
+        </div>
+    </div>
+
+    <footer class="text-center py-4 text-xs text-gray-500">
+        <p>&copy; 2025 fpengineer. All Rights Reserved.</p>
+    </footer>
+    <script>
+        // 資産データ (5年、10年、20年)
+        const assetData = {
+            "現金": {
+                "5年": { "return": 0, "risk": 0 },
+                "10年": { "return": 0, "risk": 0 },
+                "20年": { "return": 0, "risk": 0 }
+            },
+            "国内株式": {
+                "5年": { "return": 15.10, "risk": 12.10 },
+                "10年": { "return": 7.80, "risk": 14.50 },
+                "20年": { "return": 6.80, "risk": 16.70 }
+            },
+            "米国株式": {
+                "5年": { "return": 22.40, "risk": 16.10 },
+                "10年": { "return": 14.20, "risk": 17.30 },
+                "20年": { "return": 11.90, "risk": 18.30 }
+            },
+            "先進国株式": {
+                "5年": { "return": 22.40, "risk": 15.60 },
+                "10年": { "return": 12.60, "risk": 17.00 },
+                "20年": { "return": 10.80, "risk": 18.80 }
+            },
+            "新興国株式": {
+                "5年": { "return": 14.30, "risk": 16.20 },
+                "10年": { "return": 6.00, "risk": 17.50 },
+                "20年": { "return": 8.20, "risk": 22.30 }
+            },
+            "世界株式": {
+                "5年": { "return": 12.50, "risk": 15.68 },
+                "10年": { "return": 9.66, "risk": 15.68 },
+                "20年": { "return": 9.00, "risk": 14.68 }
+            },
+            "国内債券": {
+                "5年": { "return": -2.20, "risk": 2.50 },
+                "10年": { "return": -0.50, "risk": 2.30 },
+                "20年": { "return": 0.70, "risk": 2.10 }
+            },
+            "米国債": {
+                "5年": { "return": 2.73, "risk": 6.00 },
+                "10年": { "return": 1.50, "risk": 6.00 },
+                "20年": { "return": 4.50, "risk": 5.00 }
+            },
+            "先進国債券": {
+                "5年": { "return": 4.30, "risk": 6.40 },
+                "10年": { "return": 2.20, "risk": 6.70 },
+                "20年": { "return": 3.80, "risk": 8.50 }
+            },
+            "新興国債券": {
+                "5年": { "return": 8.40, "risk": 9.70 },
+                "10年": { "return": 4.60, "risk": 10.20 },
+                "20年": { "return": 6.80, "risk": 11.50 }
+            },
+            "国内REIT": {
+                "5年": { "return": 4.70, "risk": 10.40 },
+                "10年": { "return": 3.30, "risk": 12.30 },
+                "20年": { "return": 5.00, "risk": 17.50 }
+            },
+            "先進国REIT": {
+                "5年": { "return": 14.70, "risk": 17.40 },
+                "10年": { "return": 6.40, "risk": 18.00 },
+                "20年": { "return": 7.40, "risk": 21.60 }
+            },
+            "新興国REIT": {
+                "5年": { "return": 17.50, "risk": 14.70 },
+                "10年": { "return": 1.30, "risk": 21.00 },
+                "20年": { "return": 6.30, "risk": 22.60 }
+            },
+            "金": {
+                "5年": { "return": 20.90, "risk": 15.50 },
+                "10年": { "return": 12.40, "risk": 13.40 },
+                "20年": { "return": 12.50, "risk": 16.70 }
+            },
+            "コモディティ": {
+                "5年": { "return": 19.70, "risk": 18.10 },
+                "10年": { "return": 3.50, "risk": 17.10 },
+                "20年": { "return": 1.10, "risk": 18.50 }
+            }
+        };
+
+        // 相関係数マトリックス
+        const correlationMatrix = [
+            [1, 0.036, 0.246, -0.055, 0.005, -0.016, 0.018, -0.006, -0.006, 0.041, 0.04, -0.063, -0.056, -0.004, 0.009],
+            [0.036, 1, 0.099, 0.029, 0.081, 0.07, 0.069, 0.07, 0.078, 0.029, 0.186, 0.101, 0.095, 0.059, 0.138],
+            [0.246, 0.099, 1, -0.061, 0.261, 0.193, 0.122, 0.171, 0.218, 0.149, 0.335, 0.208, 0.21, 0.109, -0.069],
+            [-0.055, 0.029, -0.061, 1, 0.256, 0.2, 0.45, 0.094, 0.168, -0.468, 0.06, 0.338, 0.32, 0.111, 0.499],
+            [0.005, 0.081, 0.261, 0.256, 1, 0.828, 0.613, 0.854, 0.938, 0.266, 0.159, 0.825, 0.852, 0.385, 0.112],
+            [-0.016, 0.07, 0.193, 0.2, 0.828, 1, 0.581, 0.75, 0.848, 0.221, 0.134, 0.715, 0.798, 0.396, 0.143],
+            [0.018, 0.069, 0.122, 0.45, 0.613, 0.581, 1, 0.562, 0.611, -0.16, 0.127, 0.619, 0.626, 0.276, 0.257],
+            [-0.006, 0.07, 0.171, 0.094, 0.854, 0.75, 0.562, 1, 0.972, 0.282, 0.128, 0.703, 0.724, 0.341, 0.034],
+            [-0.006, 0.078, 0.218, 0.168, 0.938, 0.848, 0.611, 0.972, 1, 0.283, 0.149, 0.778, 0.81, 0.386, 0.082],
+            [0.041, 0.029, 0.149, -0.468, 0.266, 0.221, -0.16, 0.282, 0.283, 1, 0.054, 0.125, 0.141, 0.181, -0.31],
+            [0.04, 0.186, 0.335, 0.06, 0.159, 0.134, 0.127, 0.128, 0.149, 0.054, 1, 0.372, 0.321, 0.088, 0.075],
+            [-0.063, 0.101, 0.208, 0.338, 0.825, 0.715, 0.619, 0.703, 0.778, 0.125, 0.372, 1, 0.936, 0.339, 0.177],
+            [-0.056, 0.095, 0.21, 0.32, 0.852, 0.798, 0.626, 0.724, 0.81, 0.141, 0.321, 0.936, 1, 0.362, 0.175],
+            [-0.004, 0.059, 0.109, 0.111, 0.385, 0.396, 0.276, 0.341, 0.386, 0.181, 0.088, 0.339, 0.362, 1, 0.261],
+            [0.009, 0.138, -0.069, 0.499, 0.112, 0.143, 0.257, 0.034, 0.082, -0.31, 0.075, 0.177, 0.175, 0.261, 1]
+        ];
+
+        // 資産クラス (チェックボックスIDと対応)
+        const assetClasses = [
+            { id: "asset-cash", name: "現金", color: "#e5e7eb" },
+            { id: "asset-domestic-stock", name: "国内株式", color: "#93c5fd" },
+            { id: "asset-us-stock", name: "米国株式", color: "#60a5fa" },
+            { id: "asset-developed-stock", name: "先進国株式", color: "#3b82f6" },
+            { id: "asset-emerging-stock", name: "新興国株式", color: "#2563eb" },
+            { id: "asset-world-stock", name: "世界株式", color: "#1d4ed8" },
+            { id: "asset-domestic-bond", name: "国内債券", color: "#a7f3d0" },
+            { id: "asset-us-bond", name: "米国債", color: "#6ee7b7" },
+            { id: "asset-developed-bond", name: "先進国債券", color: "#34d399" },
+            { id: "asset-emerging-bond", name: "新興国債券", color: "#10b981" },
+            { id: "asset-domestic-reit", name: "国内REIT", color: "#fcd34d" },
+            { id: "asset-developed-reit", name: "先進国REIT", color: "#fbbf24" },
+            { id: "asset-emerging-reit", name: "新興国REIT", color: "#f59e0b" },
+            { id: "asset-gold", name: "金", color: "#fde68a" },
+            { id: "asset-commodity", name: "コモディティ", color: "#fdba74" }
+        ];
+
+        // グローバル変数
+        let selectedPeriod = "5年";
+        let optimizationMode = "risk"; // risk or return
+        let riskTolerance = "low"; // low, medium, high
+        let targetReturn = 5.0;
+        let portfolioChart = null;
+        let currentOptimalWeights = null;
+
+        // 初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('アプリケーション初期化中...');
+            
+            // アコーディオンの設定
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    if (content) {
+                        content.classList.toggle('active');
+                        const icon = this.querySelector('i');
+                        if (icon) {
+                            icon.classList.toggle('fa-chevron-down');
+                            icon.classList.toggle('fa-chevron-up');
+                        }
+                    }
+                });
+            });
+
+            // 資産選択エリアを最初から開いておく
+            const accordionContent = document.querySelector('.accordion-content');
+            if (accordionContent) {
+                accordionContent.classList.add('active');
+            }
+            
+            // 期間選択ボタン - 修正版
+            document.querySelectorAll('#period-5, #period-10, #period-20').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#period-5, #period-10, #period-20').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    selectedPeriod = this.textContent; // 修正：余分な "年" を追加しない
+                    console.log('選択された期間:', selectedPeriod);
+                });
+            });
+
+            // 全選択ボタン
+            const selectAllBtn = document.getElementById('select-all');
+            if (selectAllBtn) {
+                selectAllBtn.addEventListener('click', function() {
+                    document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                        checkbox.checked = true;
+                    });
+                    updateAssetCheckboxLabels();
+                });
+            }
+
+            // クリアボタン
+            const clearAllBtn = document.getElementById('clear-all');
+            if (clearAllBtn) {
+                clearAllBtn.addEventListener('click', function() {
+                    document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    updateAssetCheckboxLabels();
+                });
+            }
+
+            // チェックボックスのラベルスタイル更新
+            document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    updateAssetCheckboxLabels();
+                });
+            });
+            updateAssetCheckboxLabels();
+
+            // 最適化モードボタン
+            const modeRiskBtn = document.getElementById('mode-risk');
+            const modeReturnBtn = document.getElementById('mode-return');
+            const riskContainer = document.getElementById('risk-tolerance-container');
+            const returnContainer = document.getElementById('target-return-container');
+
+            if (modeRiskBtn && modeReturnBtn && riskContainer && returnContainer) {
+                modeRiskBtn.addEventListener('click', function() {
+                    modeRiskBtn.classList.add('active');
+                    modeReturnBtn.classList.remove('active');
+                    riskContainer.classList.remove('hidden');
+                    returnContainer.classList.add('hidden');
+                    optimizationMode = "risk";
+                });
+
+                modeReturnBtn.addEventListener('click', function() {
+                    modeRiskBtn.classList.remove('active');
+                    modeReturnBtn.classList.add('active');
+                    riskContainer.classList.add('hidden');
+                    returnContainer.classList.remove('hidden');
+                    optimizationMode = "return";
+                });
+            }
+
+            // リスク許容度ボタン
+            document.querySelectorAll('#risk-low, #risk-medium, #risk-high').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#risk-low, #risk-medium, #risk-high').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    riskTolerance = this.id.split('-')[1];
+                    updateRiskDescription();
+                });
+            });
+
+            // リスク説明の更新 - 修正版
+            function updateRiskDescription() {
+                const descriptions = {
+                    'low': '低: リスク0%～10%',
+                    'medium': '中: リスク10%～15%',
+                    'high': '高: リスク15%以上'
+                };
+                const riskDescElement = document.getElementById('risk-description');
+                if (riskDescElement) {
+                    riskDescElement.textContent = descriptions[riskTolerance];
+                }
+            }
+            updateRiskDescription();
+
+            // 目標リターンスライダー
+            const returnSlider = document.getElementById('target-return-slider');
+            const returnValue = document.getElementById('target-return-value');
+            if (returnSlider && returnValue) {
+                returnSlider.addEventListener('input', function() {
+                    targetReturn = parseFloat(this.value);
+                    returnValue.textContent = targetReturn.toFixed(1);
+                });
+            }
+
+            // 最適化実行ボタン
+            const optimizeBtn = document.getElementById('optimize-button');
+            if (optimizeBtn) {
+                optimizeBtn.addEventListener('click', runOptimization);
+            }
+
+            console.log('初期化完了');
+        });
+
+        // アセットチェックボックスのラベルスタイルを更新
+        function updateAssetCheckboxLabels() {
+            document.querySelectorAll('.asset-checkbox').forEach(checkbox => {
+                const label = document.querySelector(`label[for="${checkbox.id}"]`);
+                if (label) {
+                    if (checkbox.checked) {
+                        label.classList.add('bg-blue-50', 'border-blue-300');
+                        label.classList.remove('bg-white');
+                    } else {
+                        label.classList.remove('bg-blue-50', 'border-blue-300');
+                        label.classList.add('bg-white');
+                    }
+                }
+            });
+        }
+
+        // 最適化実行 - 修正版
+        function runOptimization() {
+            console.log('最適化開始 - 期間:', selectedPeriod, 'モード:', optimizationMode, 'リスク許容度:', riskTolerance);
+            
+            // 選択された資産クラスの取得
+            const selectedAssets = [];
+            assetClasses.forEach((asset, index) => {
+                const checkbox = document.getElementById(asset.id);
+                if (checkbox && checkbox.checked) {
+                    const assetDataForPeriod = assetData[asset.name][selectedPeriod];
+                    
+                    if (!assetDataForPeriod) {
+                        console.error(`資産データが見つかりません: ${asset.name}, ${selectedPeriod}`);
+                        return;
+                    }
+                    
+                    selectedAssets.push({
+                        index: index,
+                        name: asset.name,
+                        color: asset.color,
+                        return: assetDataForPeriod.return,
+                        risk: assetDataForPeriod.risk
+                    });
+                }
+            });
+
+            console.log('選択された資産数:', selectedAssets.length);
+
+            // 選択資産が2つ未満の場合はエラー
+            if (selectedAssets.length < 2) {
+                showError("最適化には最低2つ以上の資産クラスを選択してください");
+                return;
+            }
+
+            // 最適化計算開始
+            showLoading();
+
+            // 非同期で最適化を実行（計算負荷が高いため）
+            setTimeout(() => {
+                try {
+                    let result;
+                    if (optimizationMode === "risk") {
+                        // リスク許容度に基づく最適化（下限と上限を設定）- 修正版
+                        const riskBands = {
+                            'low': { min: 0.0, max: 10.0 },
+                            'medium': { min: 10.0, max: 15.0 },
+                            'high': { min: 15.0, max: 50.0 }  // 50.0は実質的に制限なし
+                        };
+                        const band = riskBands[riskTolerance];
+                        console.log(`リスク制約最適化 - 許容度: ${riskTolerance}, 範囲: ${band.min}%～${band.max}%`);
+                        result = optimizePortfolioByRiskBand(selectedAssets, band.min, band.max);
+                        
+                        if (!result) {
+                            const rangeText = riskTolerance === 'high' ? `${band.min}%以上` : `${band.min}%～${band.max}%`;
+                            const toleranceNames = { 'low': '低', 'medium': '中', 'high': '高' };
+                            showError(`リスク許容度「${toleranceNames[riskTolerance]}」（リスク${rangeText}）の範囲内で最適なポートフォリオが見つかりませんでした。異なる資産の組み合わせを試してください。`);
+                            return;
+                        }
+                    } else {
+                        // 目標リターンに基づく最適化
+                        console.log('目標リターン最適化 - 目標:', targetReturn);
+                        result = optimizePortfolioByTargetReturn(selectedAssets, targetReturn);
+                        
+                        if (!result) {
+                            let errorMessage = "設定におけるシャープレシオが最大となるポートフォリオは存在しません";
+                            
+                            const maxReturn = Math.max(...selectedAssets.map(asset => asset.return));
+                            const minReturn = Math.min(...selectedAssets.map(asset => asset.return));
+                            
+                            if (targetReturn > maxReturn) {
+                                errorMessage = `目標リターン (${targetReturn.toFixed(1)}%) が選択された資産で達成可能な最大リターン (${maxReturn.toFixed(1)}%) を超えています`;
+                            } else if (targetReturn < minReturn) {
+                                errorMessage = `目標リターン (${targetReturn.toFixed(1)}%) が選択された資産で達成可能な最小リターン (${minReturn.toFixed(1)}%) を下回っています`;
+                            }
+                            
+                            showError(errorMessage);
+                            return;
+                        }
+                    }
+
+                    console.log('最適化成功:', result);
+                    showResults(result, selectedAssets);
+                } catch (error) {
+                    console.error("最適化エラー:", error);
+                    showError("最適化処理中にエラーが発生しました: " + error.message);
+                }
+            }, 100);
+        }
+
+        // リスク範囲内でのポートフォリオ最適化 - 新機能
+        function optimizePortfolioByRiskBand(assets, minRisk, maxRisk) {
+            const iterations = 50000; // 精度とパフォーマンスのバランスを考慮
+            let bestSharpe = -Infinity;
+            let bestWeights = null;
+            let bestPortfolio = null;
+            let foundPortfolios = 0;
+
+            const subCorrelationMatrix = extractSubMatrix(assets);
+
+            console.log(`リスク範囲での最適化開始 - 範囲: ${minRisk}%～${maxRisk}%, ${iterations}回反復`);
+
+            for (let i = 0; i < iterations; i++) {
+                const randomWeights = generateRandomWeights(assets.length);
+                const portfolio = calculatePortfolio(assets, randomWeights, subCorrelationMatrix);
+                
+                // リスクの下限と上限の両方を考慮
+                if (portfolio.risk >= minRisk && portfolio.risk <= maxRisk) {
+                    foundPortfolios++;
+                    
+                    if (portfolio.sharpe > bestSharpe) {
+                        bestSharpe = portfolio.sharpe;
+                        bestWeights = randomWeights;
+                        bestPortfolio = portfolio;
+                    }
+                }
+                
+                // 進捗表示（デバッグ用）
+                if (i % 10000 === 0) {
+                    console.log(`進捗: ${i}/${iterations} (${(i/iterations*100).toFixed(1)}%) - 発見: ${foundPortfolios}個`);
+                }
+            }
+
+            console.log(`最適化完了 - 範囲内ポートフォリオ: ${foundPortfolios}個, 最良シャープレシオ: ${bestSharpe}`);
+
+            if (bestPortfolio === null) {
+                console.log(`警告: リスク範囲 ${minRisk}%～${maxRisk}% 内にポートフォリオが見つかりませんでした`);
+                return null;
+            }
+
+            console.log(`最適ポートフォリオ - リスク: ${bestPortfolio.risk.toFixed(2)}%, リターン: ${bestPortfolio.return.toFixed(2)}%, シャープレシオ: ${bestPortfolio.sharpe.toFixed(4)}`);
+
+            return {
+                weights: bestWeights,
+                return: bestPortfolio.return,
+                risk: bestPortfolio.risk,
+                sharpe: bestPortfolio.sharpe
+            };
+        }
+
+        // 目標リターン制約付きポートフォリオ最適化
+        function optimizePortfolioByTargetReturn(assets, targetReturn) {
+            const iterations = 50000; // 精度とパフォーマンスのバランスを考慮
+            let bestSharpe = -Infinity;
+            let bestWeights = null;
+            let bestPortfolio = null;
+            let minReturnDiff = Infinity;
+
+            const subCorrelationMatrix = extractSubMatrix(assets);
+
+            // 目標リターンが達成可能かチェック
+            const maxReturn = Math.max(...assets.map(asset => asset.return));
+            const minReturn = Math.min(...assets.map(asset => asset.return));
+            
+            console.log(`リターン範囲: ${minReturn.toFixed(2)}% - ${maxReturn.toFixed(2)}%, 目標: ${targetReturn.toFixed(2)}%`);
+            
+            if (targetReturn > maxReturn) {
+                console.warn("目標リターンが高すぎます。最大:", maxReturn);
+                return null;
+            }
+            
+            if (targetReturn < minReturn) {
+                console.warn("目標リターンが低すぎます。最小:", minReturn);
+                return null;
+            }
+
+            // 許容誤差
+            const returnTolerance = 0.5; // ±0.5%
+
+            console.log(`モンテカルロシミュレーション開始 - ${iterations}回反復`);
+
+            for (let i = 0; i < iterations; i++) {
+                const randomWeights = generateRandomWeights(assets.length);
+                const portfolio = calculatePortfolio(assets, randomWeights, subCorrelationMatrix);
+                
+                // 目標リターンに近いものを優先
+                const returnDiff = Math.abs(portfolio.return - targetReturn);
+                
+                if (returnDiff <= returnTolerance) {
+                    // 許容範囲内で最高のシャープレシオを持つポートフォリオを選択
+                    if (portfolio.sharpe > bestSharpe) {
+                        bestSharpe = portfolio.sharpe;
+                        bestWeights = randomWeights;
+                        bestPortfolio = portfolio;
+                    }
+                } else if (bestPortfolio === null || returnDiff < minReturnDiff) {
+                    // まだ許容範囲内のポートフォリオがない場合は、目標に最も近いものを保存
+                    minReturnDiff = returnDiff;
+                    bestWeights = randomWeights;
+                    bestPortfolio = portfolio;
+                }
+            }
+
+            console.log('最適化完了 - 最良シャープレシオ:', bestSharpe);
+
+            if (bestPortfolio === null) {
+                return null;
+            }
+
+            // 許容範囲を超えている場合は警告
+            if (Math.abs(bestPortfolio.return - targetReturn) > returnTolerance) {
+                console.warn("正確な目標リターンを達成できませんでした。最も近いリターン:", bestPortfolio.return);
+            }
+
+            return {
+                weights: bestWeights,
+                return: bestPortfolio.return,
+                risk: bestPortfolio.risk,
+                sharpe: bestPortfolio.sharpe
+            };
+        }
+
+        // 選択された資産の相関行列を抽出
+        function extractSubMatrix(assets) {
+            const subMatrix = [];
+            for (let i = 0; i < assets.length; i++) {
+                const row = [];
+                for (let j = 0; j < assets.length; j++) {
+                    row.push(correlationMatrix[assets[i].index][assets[j].index]);
+                }
+                subMatrix.push(row);
+            }
+            return subMatrix;
+        }
+
+        // ランダムな重みを生成（合計1）- 改善版
+        function generateRandomWeights(n) {
+            const weights = new Array(n).fill(0);
+            
+            // ディリクレ分布風の重み生成（より多様な分布）
+            for (let i = 0; i < n; i++) {
+                // ガンマ分布風の乱数生成
+                weights[i] = -Math.log(Math.random());
+            }
+            
+            // 正規化
+            const sum = weights.reduce((a, b) => a + b, 0);
+            for (let i = 0; i < n; i++) {
+                weights[i] /= sum;
+            }
+            
+            return weights;
+        }
+
+        // ポートフォリオのリターン、リスク、シャープレシオを計算
+        function calculatePortfolio(assets, weights, correlationMatrix) {
+            // リターン計算
+            let portfolioReturn = 0;
+            for (let i = 0; i < assets.length; i++) {
+                portfolioReturn += weights[i] * assets[i].return;
+            }
+            
+            // リスク計算
+            let portfolioVariance = 0;
+            for (let i = 0; i < assets.length; i++) {
+                for (let j = 0; j < assets.length; j++) {
+                    portfolioVariance += weights[i] * weights[j] * assets[i].risk * assets[j].risk * correlationMatrix[i][j] / 10000;
+                }
+            }
+            
+            const portfolioRisk = Math.sqrt(portfolioVariance) * 100;
+            
+            // シャープレシオ計算 (無リスク資産は0%として計算)
+            const sharpeRatio = portfolioRisk > 0 ? portfolioReturn / portfolioRisk : 0;
+            
+            return {
+                return: portfolioReturn,
+                risk: portfolioRisk,
+                sharpe: sharpeRatio
+            };
+        }
+
+        // 結果表示
+        function showResults(result, selectedAssets) {
+            hideAllMessages();
+            const resultsContainer = document.getElementById('results-container');
+            if (resultsContainer) {
+                resultsContainer.classList.remove('hidden');
+            }
+            
+            // パフォーマンス指標の表示
+            const resultReturnElement = document.getElementById('result-return');
+            const resultRiskElement = document.getElementById('result-risk');
+            const resultSharpeElement = document.getElementById('result-sharpe');
+            
+            if (resultReturnElement) resultReturnElement.textContent = result.return.toFixed(2) + "%";
+            if (resultRiskElement) resultRiskElement.textContent = result.risk.toFixed(2) + "%";
+            if (resultSharpeElement) resultSharpeElement.textContent = result.sharpe.toFixed(4);
+            
+            // 資産配分テーブルの作成
+            const tableBody = document.getElementById('allocation-table-body');
+            if (tableBody) {
+                tableBody.innerHTML = '';
+                
+                // 配分比率が1%以上の資産のみ表示する準備
+                const significantAllocations = [];
+                
+                selectedAssets.forEach((asset, i) => {
+                    const weight = result.weights[i] * 100;
+                    if (weight >= 1.0) {  // 1%以上の配分のみ表示
+                        significantAllocations.push({
+                            name: asset.name,
+                            color: asset.color,
+                            weight: weight,
+                            return: asset.return,
+                            risk: asset.risk
+                        });
+                    }
+                });
+                
+                // 降順にソート
+                significantAllocations.sort((a, b) => b.weight - a.weight);
+                
+                // テーブルに表示
+                significantAllocations.forEach(asset => {
+                    const row = document.createElement('tr');
+                    row.classList.add('hover:bg-gray-50', 'transition-colors');
+                    
+                    const nameCell = document.createElement('td');
+                    nameCell.className = 'py-2 px-4';
+                    nameCell.innerHTML = `<div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${asset.color}"></div>
+                                            ${asset.name}
+                                          </div>`;
+                    
+                    const weightCell = document.createElement('td');
+                    weightCell.className = 'py-2 px-4 text-right font-semibold';
+                    weightCell.textContent = asset.weight.toFixed(2) + "%";
+                    
+                    const returnCell = document.createElement('td');
+                    returnCell.className = 'py-2 px-4 text-right';
+                    returnCell.textContent = asset.return.toFixed(2) + "%";
+                    
+                    const riskCell = document.createElement('td');
+                    riskCell.className = 'py-2 px-4 text-right';
+                    riskCell.textContent = asset.risk.toFixed(2) + "%";
+                    
+                    const barCell = document.createElement('td');
+                    barCell.className = 'py-2 px-4 hidden md:table-cell';
+                    barCell.innerHTML = `<div class="w-full bg-gray-200 rounded-full h-2">
+                                           <div class="allocation-bar rounded-full" style="width: 0%; background-color: ${asset.color}"></div>
+                                         </div>`;
+                    
+                    row.appendChild(nameCell);
+                    row.appendChild(weightCell);
+                    row.appendChild(returnCell);
+                    row.appendChild(riskCell);
+                    row.appendChild(barCell);
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // バーチャートのアニメーション
+                setTimeout(() => {
+                    const bars = document.querySelectorAll('.allocation-bar');
+                    bars.forEach((bar, i) => {
+                        if (significantAllocations[i]) {
+                            bar.style.width = significantAllocations[i].weight + "%";
+                        }
+                    });
+                }, 100);
+                
+                // 円グラフの作成
+                createPieChart(significantAllocations);
+            }
+            
+            // 現在の最適重みを保存
+            currentOptimalWeights = result.weights;
+        }
+
+        // 円グラフの作成 - 修正版
+        function createPieChart(allocations) {
+            const ctx = document.getElementById('portfolio-pie-chart');
+            if (!ctx) return;
+            
+            const context = ctx.getContext('2d');
+            
+            // 既存のチャートを破棄
+            if (portfolioChart) {
+                portfolioChart.destroy();
+            }
+            
+            // チャートデータの準備 - 修正: weightプロパティを正しく使用
+            const chartData = allocations.map(a => ({
+                name: a.name,
+                value: a.weight,  // 修正: a.weightを使用
+                color: a.color
+            }));
+            
+            portfolioChart = new Chart(context, {
+                type: 'pie',
+                data: {
+                    labels: chartData.map(d => d.name),
+                    datasets: [{
+                        data: chartData.map(d => d.value),
+                        backgroundColor: chartData.map(d => d.color),
+                        borderColor: 'white',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: {
+                                    size: 11
+                                },
+                                padding: 10,
+                                boxWidth: 10
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const value = context.raw;
+                                    return context.label + ': ' + value.toFixed(2) + '%';
+                                }
+                            }
+                        }
+                    },
+                    animation: {
+                        duration: 1000
+                    }
+                }
+            });
+        }
+
+        // ローディングの表示
+        function showLoading() {
+            hideAllMessages();
+            const loadingElement = document.getElementById('loading-message');
+            if (loadingElement) {
+                loadingElement.classList.remove('hidden');
+            }
+        }
+
+        // エラー表示
+        function showError(message) {
+            hideAllMessages();
+            const errorElement = document.getElementById('error-message');
+            const errorTextElement = document.getElementById('error-text');
+            
+            if (errorElement) {
+                errorElement.classList.remove('hidden');
+            }
+            if (errorTextElement) {
+                errorTextElement.textContent = message;
+            }
+        }
+
+        // メッセージ非表示
+        function hideAllMessages() {
+            const initialMessage = document.getElementById('initial-message');
+            const errorMessage = document.getElementById('error-message');
+            const loadingMessage = document.getElementById('loading-message');
+            const resultsContainer = document.getElementById('results-container');
+            
+            if (initialMessage) initialMessage.classList.add('hidden');
+            if (errorMessage) errorMessage.classList.add('hidden');
+            if (loadingMessage) loadingMessage.classList.add('hidden');
+            if (resultsContainer) resultsContainer.classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

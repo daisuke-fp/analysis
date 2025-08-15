@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>3大資金シミュレーション</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+    .chart-container{height:300px!important}
+    .card-hover:hover{transform:translateY(-2px);box-shadow:0 10px 25px rgba(0,0,0,.1)}
+    .result-card{border-left:4px solid #4F46E5}
+    .child-detail{border-left:3px solid #10B981;padding-left:8px;margin:8px 0 0 8px}
+    .delete-child-btn{float:right}
+    .stage-badge{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:11px;margin-right:6px}
+    .stage-nur{background:#ecfeff;color:#0e7490}.stage-elem{background:#eef2ff;color:#4338ca}
+    .stage-jun{background:#f0fdf4;color:#15803d}.stage-sen{background:#fff7ed;color:#c2410c}
+    .stage-uni{background:#f5f3ff;color:#6d28d9}
+    .mono{font-variant-numeric:tabular-nums}
+  </style>
+</head>
+<body class="bg-gray-50 font-sans">
+<div class="container mx-auto px-4 max-w-7xl pt-8">
+  <header class="bg-blue-600 text-white py-6 mb-8 rounded-lg">
+    <h1 class="text-3xl font-bold text-center flex items-center justify-center">
+      <i class="fas fa-calculator mr-3"></i>3大資金シミュレーション
+    </h1>
+    <p class="text-center text-blue-100 mt-2">教育資金・住宅資金・老後資金の総合プランニング</p>
+  </header>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+      <section class="bg-white rounded-lg shadow-lg p-6 mb-6 card-hover">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-user-friends mr-2 text-blue-600"></i>基本情報
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">本人年齢 [歳]</label>
+            <input id="personAge" type="number" value="35" min="20" max="80" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">配偶者年齢 [歳]</label>
+            <input id="spouseAge" type="number" value="33" min="20" max="80" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">本人年収 [万円]</label>
+            <input id="personIncome" type="number" value="500" min="0" max="5000" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">配偶者年収 [万円]</label>
+            <input id="spouseIncome" type="number" value="300" min="0" max="5000" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-lg shadow-lg p-6 mb-6 card-hover">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+            <i class="fas fa-graduation-cap mr-2 text-green-600"></i>教育資金
+          </h2>
+          <button id="addChildBtn" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-md">
+            <i class="fas fa-plus mr-1"></i>子どもを追加
+          </button>
+        </div>
+
+        <div id="childrenContainer">
+          <div class="child-form border-l-4 border-green-500 pl-4 mb-6" data-child="1">
+            <h3 class="text-lg font-semibold text-gray-700 mb-3">第1子</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">学年</label>
+                <select class="child-grade w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                  <option value="0-unschool">0歳未就園</option>
+                  <option value="0-school">0歳児クラス就園</option>
+                  <option value="1-unschool">1歳未就園</option>
+                  <option value="1-school">1歳児クラス就園</option>
+                  <option value="2-unschool">2歳未就園</option>
+                  <option value="2-school">2歳児クラス就園</option>
+                  <option value="kindergarten-1" selected>年少</option>
+                  <option value="kindergarten-2">年中</option>
+                  <option value="kindergarten-3">年長</option>
+                  <option value="elementary-1">小1</option>
+                  <option value="elementary-2">小2</option>
+                  <option value="elementary-3">小3</option>
+                  <option value="elementary-4">小4</option>
+                  <option value="elementary-5">小5</option>
+                  <option value="elementary-6">小6</option>
+                  <option value="junior-1">中1</option>
+                  <option value="junior-2">中2</option>
+                  <option value="junior-3">中3</option>
+                  <option value="senior-1">高1</option>
+                  <option value="senior-2">高2</option>
+                  <option value="senior-3">高3</option>
+                  <option value="university-1">大1</option>
+                  <option value="university-2">大2</option>
+                  <option value="university-3">大3</option>
+                  <option value="university-4">大4</option>
+                </select>
+              </div>
+
+              <div class="unschool-planning hidden">
+                <label class="block text-sm font-medium text-gray-700 mb-1">就園予定年齢</label>
+                <select class="school-plan-age w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                  <option value="0">0歳</option>
+                  <option value="1">1歳</option>
+                  <option value="2">2歳</option>
+                  <option value="3" selected>年少（3歳）</option>
+                </select>
+                <p class="text-xs text-gray-500 mt-1">※「0〜2歳未就園」を選ぶと表示</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">準備済み資金 [万円]</label>
+                <input type="number" class="prepared-fund w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="0" min="0">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">毎月可能負担額 [円]</label>
+                <input type="number" class="monthly-payment w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="10000" min="0">
+                <div class="mt-2 text-xs text-gray-600">
+                  <i class="fas fa-info-circle mr-1"></i>教育資金用に毎月収入から負担できる金額
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h4 class="text-md font-medium text-gray-700 mb-2">習い事・仕送り</h4>
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">習い事1つ目 [円]</label>
+                  <input type="number" class="hobby1-cost w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="0" min="0">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">習い事2つ目 [円]</label>
+                  <input type="number" class="hobby2-cost w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="0" min="0">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">習い事3つ目 [円]</label>
+                  <input type="number" class="hobby3-cost w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="0" min="0">
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">仕送りその他 [円]</label>
+                  <input type="number" class="allowance-cost w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500" value="0" min="0">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">習い事1つ目タイミング</label>
+                  <div class="space-y-1 text-sm">
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby1-nursery mr-1">保育園・幼稚園</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby1-elementary mr-1">小学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby1-junior mr-1">中学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby1-senior mr-1">高校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby1-university mr-1">大学</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">習い事2つ目タイミング</label>
+                  <div class="space-y-1 text-sm">
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby2-nursery mr-1">保育園・幼稚園</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby2-elementary mr-1">小学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby2-junior mr-1">中学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby2-senior mr-1">高校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby2-university mr-1">大学</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">習い事3つ目タイミング</label>
+                  <div class="space-y-1 text-sm">
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby3-nursery mr-1">保育園・幼稚園</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby3-elementary mr-1">小学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby3-junior mr-1">中学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby3-senior mr-1">高校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="hobby3-university mr-1">大学</label>
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-2">仕送りタイミング</label>
+                  <div class="space-y-1 text-sm">
+                    <label class="inline-flex items-center"><input type="checkbox" class="allowance-nursery mr-1">保育園・幼稚園</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="allowance-elementary mr-1">小学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="allowance-junior mr-1">中学校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="allowance-senior mr-1">高校</label><br/>
+                    <label class="inline-flex items-center"><input type="checkbox" class="allowance-university mr-1">大学</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4">
+              <h4 class="text-md font-medium text-gray-700 mb-2">希望進路</h4>
+              <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">保育園・幼稚園</label>
+                  <select class="nursery-type w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="kindergarten-public">幼稚園公立</option>
+                    <option value="kindergarten-private" selected>幼稚園私立</option>
+                    <option value="nursery">保育園</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">小学校</label>
+                  <select class="elementary-type w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="public" selected>公立</option>
+                    <option value="private">私立</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">中学校</label>
+                  <select class="junior-type w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="public" selected>公立</option>
+                    <option value="private">私立</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">高校</label>
+                  <select class="senior-type w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="public" selected>公立</option>
+                    <option value="private">私立</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">大学</label>
+                  <select class="university-type w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+                    <option value="national" selected>国公立</option>
+                    <option value="private-liberal">私立文系</option>
+                    <option value="private-science">私立理系</option>
+                    <option value="private-medical">私立医歯系</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div></div></section>
+
+      <section class="bg-white rounded-lg shadow-lg p-6 mb-6 card-hover">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-home mr-2" style="color: #F97316;"></i>住宅資金
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">住宅購入予定 [年後]</label>
+            <input id="housePurchaseYear" type="number" value="5" min="1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">予定頭金 [万円]</label>
+            <input id="houseDownPayment" type="number" value="500" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">準備済み資金 [万円]</label>
+            <input id="housePreparedFund" type="number" value="100" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-lg shadow-lg p-6 mb-6 card-hover">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-piggy-bank mr-2 text-purple-600"></i>老後資金
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">老後必要生活費 [万円/月]</label>
+            <input id="retirementLifeCost" type="number" value="25" min="10" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">退職予定年齢 [歳]</label>
+            <input id="retirementAge" type="number" value="65" min="55" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">想定寿命 [歳]</label>
+            <input id="lifeExpectancy" type="number" value="90" min="70" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">準備済み資金 [万円]</label>
+            <input id="retirementPreparedFund" type="number" value="0" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">退職金 [万円]</label>
+            <input id="severancePay" type="number" value="0" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">老齢年金 [万円/月]</label>
+            <input id="pension" type="number" value="20" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">年金受取予定年齢 [歳]</label>
+            <input id="pensionAge" type="number" value="65" min="60" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="col-span-1 md:col-span-4 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">退職後労働収入 [万円/月]</label>
+              <input id="postRetirementIncome" type="number" value="0" min="0" step="0.1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-1">労働期間 [年]</label>
+              <input id="postRetirementWorkYears" type="number" value="0" min="0" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bg-white rounded-lg shadow-lg p-6 mb-6 card-hover">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-chart-line mr-2 text-indigo-600"></i>積立・運用設定
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-4 mb-3">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">教育資金 積立期間 [年]</label>
+            <input id="educationSavingYears" type="number" value="15" min="1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">教育資金 運用利率 [%]</label>
+            <input id="educationInterestRate" type="number" value="3" min="0" step="0.1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">資金準備する項目を選択</label>
+            <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <label class="flex items-center text-sm"><input type="checkbox" id="includeElementary" class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>小学校</label>
+                <label class="flex items-center text-sm"><input type="checkbox" id="includeJunior" class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>中学校</label>
+                <label class="flex items-center text-sm"><input type="checkbox" id="includeSenior" class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>高校</label>
+                <label class="flex items-center text-sm"><input type="checkbox" id="includeUniversity" class="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" checked>大学</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">住宅資金 積立期間 [年]</label>
+            <input id="houseSavingYears" type="number" value="5" min="1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">住宅資金 運用利率 [%]</label>
+            <input id="houseInterestRate" type="number" value="2" min="0" step="0.1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">老後資金 積立期間 [年]</label>
+            <input id="retirementSavingYears" type="number" value="30" min="5" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">老後資金 運用利率 [%]</label>
+            <input id="retirementInterestRate" type="number" value="4" min="0" step="0.1" class="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500">
+          </div>
+        </div>
+      </section>
+
+      <div class="text-center mb-6">
+        <button id="calculateBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg text-lg font-semibold shadow-lg">
+          <i class="fas fa-calculator mr-2"></i>シミュレーション実行
+        </button>
+      </div>
+    </div>
+
+    <div class="lg:col-span-1">
+      <section class="bg-white rounded-lg shadow-lg p-6 card-hover">
+        <h2 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+          <i class="fas fa-chart-bar mr-2 text-red-600"></i>シミュレーション結果
+        </h2>
+
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">不足額</h3>
+          <div class="chart-container mb-4"><canvas id="shortageChart"></canvas></div>
+          <div class="space-y-2 text-sm">
+            <div class="result-card bg-green-50 p-3 rounded" style="border-left-color: #10B981;"><div>教育資金(※選択項目のみ): <span id="educationShortage" class="text-green-600 font-bold">0万円</span></div></div>
+            <div id="childrenDetail" class="text-xs text-gray-600 ml-2 mt-2"></div>
+            <div class="result-card p-3 rounded" style="background-color: #FFF7ED; border-left-color: #FB923C;"><div>住宅資金: <span id="houseShortage" class="text-orange-600 font-bold">0万円</span></div></div>
+            <div class="result-card bg-purple-50 p-3 rounded" style="border-left-color: #9333EA;"><div>老後資金: <span id="retirementShortage" class="text-purple-600 font-bold">0万円</span></div></div>
+            <div class="result-card bg-gray-100 p-3 rounded"><div class="font-bold">合計: <span id="totalShortage" class="text-gray-800 text-lg">0万円</span></div></div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">必要積立金額（運用なし）</h3>
+          <div class="chart-container mb-4"><canvas id="savingChart"></canvas></div>
+          <div class="space-y-2 text-sm">
+            <div class="result-card bg-green-50 p-2 rounded" style="border-left-color: #10B981;"><div>教育資金: <span id="educationSaving" class="text-green-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card p-2 rounded" style="background-color: #FFF7ED; border-left-color: #FB923C;"><div>住宅資金: <span id="houseSaving" class="text-orange-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card bg-purple-50 p-2 rounded" style="border-left-color: #9333EA;"><div>老後資金: <span id="retirementSaving" class="text-purple-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card bg-gray-100 p-2 rounded"><div class="font-bold">合計: <span id="totalSaving" class="text-gray-800 text-lg">0.0万円/月</span></div></div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">必要積立運用金額</h3>
+          <div class="chart-container mb-4"><canvas id="investmentChart"></canvas></div>
+          <div class="space-y-2 text-sm">
+            <div class="result-card bg-green-50 p-2 rounded" style="border-left-color: #10B981;"><div>教育資金: <span id="educationInvestment" class="text-green-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card p-2 rounded" style="background-color: #FFF7ED; border-left-color: #FB923C;"><div>住宅資金: <span id="houseInvestment" class="text-orange-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card bg-purple-50 p-2 rounded" style="border-left-color: #9333EA;"><div>老後資金: <span id="retirementInvestment" class="text-purple-600 font-bold">0.0万円/月</span></div></div>
+            <div class="result-card bg-gray-100 p-2 rounded"><div class="font-bold">合計: <span id="totalInvestment" class="text-gray-800 text-lg">0.0万円/月</span></div></div>
+          </div>
+        </div>
+
+        <div class="mb-6">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">積立期間</h3>
+          <div class="space-y-2 text-sm">
+            <div class="result-card bg-green-50 p-2 rounded" style="border-left-color: #10B981;"><div>教育資金: <span id="educationPeriod" class="text-green-600 font-bold">0年</span></div></div>
+            <div class="result-card p-2 rounded" style="background-color: #FFF7ED; border-left-color: #FB923C;"><div>住宅資金: <span id="housePeriod" class="text-orange-600 font-bold">0年</span></div></div>
+            <div class="result-card bg-purple-50 p-2 rounded" style="border-left-color: #9333EA;"><div>老後資金: <span id="retirementPeriod" class="text-purple-600 font-bold">0年</span></div></div>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <h3 class="text-lg font-semibold text-gray-700 mb-3">教育資金総額（子ども別）</h3>
+          <div class="chart-container mb-3"><canvas id="educationByChildChart"></canvas></div>
+        </div>
+
+        <div class="mb-6">
+          <h4 class="text-md font-semibold text-gray-700 mb-2">子ども別 内訳（控除前・未来分、単位：万円）</h4>
+          <div id="educationByChildBreakdown" class="space-y-3 text-sm"></div>
+        </div>
+
+      </section>
+    </div>
+  </div>
+
+  <section class="bg-white rounded-lg shadow-lg p-6 mt-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">免責事項</h2>
+    <ul class="text-xs text-gray-600 space-y-2 list-none">
+      <li>※高校無償化制度や多子世帯の授業料等無償化制度、各自治体による保育園の無償化制度には対応しておりません。また保育料の第2子半額、第3子無償にも対応しておりません。</li>
+      <li>※保育料は概算であり、実際の保育料は自治体によっても異なります</li>
+      <li>※本シミュレーションおよび掲載情報の利用により生じたいかなる損害（直接的・間接的を問わず）についても、当社は一切の責任を負いません。</li>
+      <li>※当社は、お客様が本シミュレーションを利用したことにより生じた結果について、一切の責任を負いません。また、本シミュレーションは簡易的な計算方法を用いており、その正確性および完全性を保証するものではありません。なお、シミュレーション内容は予告なく変更する場合があります。</li>
+      <li>※ご入力いただいた情報は、本シミュレーション以外には使用せず、当社で取得・蓄積することもありません。</li>
+      <li>※本シミュレーションはJavaScriptを使用しています。JavaScriptが無効になっている場合、正しく動作しないことがありますので、有効に設定のうえご利用ください。</li>
+    </ul>
+  </section>
+  </div>
+
+<footer class="mt-12 bg-gray-800 text-white py-6">
+  <div class="container mx-auto px-4 text-center">
+    <p class="text-gray-400">© 2025 fpengineer. All Rights Reserved.</p>
+  </div>
+</footer>
+
+<script>
+/* ===== データテーブル ===== */
+const educationCosts = {
+  nursery:{ public:74571, private:164752 },
+  elementary:{ public:104984, private:1006152 },
+  junior:{ public:170019, private:1068577 },
+  senior:{ public:309261, private:750362 },
+  university:{ national:606300, privateLiberal:1026940, privateScience:1354383, privateMedical:5885775 }
+};
+// （3歳未満向け）保育園の概算テーブル：住民税（所得割＋均等割）に応じた月額→年額化
+const nurseryFees = [
+      { min: 0, max: 12000, fee: 7400 },
+      { min: 12000, max: 37000, fee: 9500 },
+      { min: 37000, max: 52000, fee: 11300 },
+      { min: 52000, max: 82000, fee: 18300 },
+      { min: 82000, max: 122000, fee: 23000 },
+      { min: 122000, max: 162000, fee: 27000 },
+      { min: 162000, max: 202000, fee: 29700 },
+      { min: 202000, max: 220000, fee: 32300 },
+      { min: 220000, max: 235000, fee: 35700 },
+      { min: 235000, max: 250000, fee: 38300 },
+      { min: 250000, max: 265000, fee: 40800 },
+      { min: 265000, max: 280000, fee: 42800 },
+      { min: 280000, max: 295000, fee: 45500 },
+      { min: 295000, max: 310000, fee: 47800 },
+      { min: 310000, max: 325000, fee: 50000 },
+      { min: 325000, max: 340000, fee: 52000 },
+      { min: 340000, max: 355000, fee: 53500 },
+      { min: 355000, max: 370000, fee: 55500 },
+      { min: 370000, max: 385000, fee: 57000 },
+      { min: 385000, max: 400000, fee: 58500 },
+      { min: 400000, max: 445000, fee: 61000 },
+      { min: 445000, max: 490000, fee: 64000 },
+      { min: 490000, max: 570000, fee: 67300 },
+      { min: 570000, max: 650000, fee: 70500 },
+      { min: 650000, max: 730000, fee: 73000 },
+      { min: 730000, max: 840000, fee: 74500 },
+      { min: 840000, max: 950000, fee: 76000 },
+      { min: 950000, max: 1130000, fee: 77000 },
+      { min: 1130000, max: 1310000, fee: 78000 },
+      { min: 1310000, max: Infinity, fee: 79000 }
+    ];
+
+/* ===== 住民税の簡易計算 ===== */
+function calculateSalaryIncomeDeduction(incomeManYen){
+  const incomeYen = incomeManYen*10000;
+  if (incomeYen <= 1625000) return 550000;
+  if (incomeYen <= 1800000) return incomeYen*0.4 - 100000;
+  if (incomeYen <= 3600000) return incomeYen*0.3 + 80000;
+  if (incomeYen <= 6600000) return incomeYen*0.2 + 440000;
+  if (incomeYen <= 8500000) return incomeYen*0.1 + 1100000;
+  return 1950000;
+}
+function calculateSocialInsurance(incomeManYen, age){
+  const monthly = incomeManYen*10000/12;
+  let health = 0.04955, pension=0.0915, employ=0.006;
+  if (age>=40) health += 0.00795;
+  return monthly*(health+pension+employ)*12;
+}
+function calculateResidentTax(incomeManYen, age){
+  const incomeYen = incomeManYen*10000;
+  const sal = calculateSalaryIncomeDeduction(incomeManYen);
+  const basic = 430000;
+  const soc = calculateSocialInsurance(incomeManYen, age);
+  const taxable = Math.max(0, incomeYen - sal - basic - soc);
+  return taxable*0.06; // 所得割6%
+}
+
+/* ===== 残り年数（学校ステージ：未来分のみ） ===== */
+function getRemainingYearsByStage(gradeValue, planAge){
+  const FULL = { nursery:3, elementary:6, junior:3, senior:3, university:4 };
+  let y = { nursery:0, elementary:0, junior:0, senior:0, university:0 };
+
+  if (/^[012]-unschool$/.test(gradeValue)){
+    if (planAge===3) y.nursery = FULL.nursery;
+    else y.nursery = Math.max(0, FULL.nursery - planAge);
+    y.elementary=FULL.elementary; y.junior=FULL.junior; y.senior=FULL.senior; y.university=FULL.university;
+    return y;
+  }
+  if (/^[012]-school$/.test(gradeValue)){
+    const age=parseInt(gradeValue[0],10);
+    y.nursery = Math.max(0, FULL.nursery - age);
+    y.elementary=FULL.elementary; y.junior=FULL.junior; y.senior=FULL.senior; y.university=FULL.university;
+    return y;
+  }
+  if (/^kindergarten-(1|2|3)$/.test(gradeValue)){
+    const k=parseInt(gradeValue.split('-')[1],10);
+    y.nursery = Math.max(0, 4-k); // 年少1→残3, 年中2→残2, 年長3→残1
+    y.elementary=FULL.elementary; y.junior=FULL.junior; y.senior=FULL.senior; y.university=FULL.university;
+    return y;
+  }
+  if (/^elementary-(\d)$/.test(gradeValue)){
+    const n=parseInt(gradeValue.split('-')[1],10);
+    y.elementary=Math.max(0,7-n);
+    y.junior=FULL.junior; y.senior=FULL.senior; y.university=FULL.university;
+    return y;
+  }
+  if (/^junior-(\d)$/.test(gradeValue)){
+    const n=parseInt(gradeValue.split('-')[1],10);
+    y.junior=Math.max(0,4-n);
+    y.senior=FULL.senior; y.university=FULL.university;
+    return y;
+  }
+  if (/^senior-(\d)$/.test(gradeValue)){
+    const n=parseInt(gradeValue.split('-')[1],10);
+    y.senior=Math.max(0,4-n);
+    y.university=FULL.university;
+    return y;
+  }
+  if (/^university-(\d)$/.test(gradeValue)){
+    const n=parseInt(gradeValue.split('-')[1],10);
+    y.university=Math.max(0,5-n);
+    return y;
+  }
+  return { nursery:3, elementary:6, junior:3, senior:3, university:4 };
+}
+
+/* ===== 新規：保育年数を pre(0-2歳) と post(3-5歳) に分解 ===== */
+function getNurseryYearsSplit(gradeValue, planAge) {
+  // gradeValue から「就園開始年齢」を推定（0〜5の整数）
+  let startAge = 6; // 初期=小学生以上(カウント0)
+  if (/^([012])-(unschool|school)$/.test(gradeValue)) {
+    const a = parseInt(RegExp.$1, 10);
+    if (gradeValue.includes('unschool')) {
+      // 未就園は就園予定年齢（0/1/2/3=年少）で開始
+      startAge = planAge; // 0,1,2,3
+    } else {
+      // 0/1/2歳クラス就園
+      startAge = a; // 0,1,2
+    }
+  } else if (/^kindergarten-(1|2|3)$/.test(gradeValue)) {
+    // 年少=3, 年中=4, 年長=5
+    startAge = 2 + parseInt(gradeValue.split('-')[1], 10); // 1→3,2→4,3→5
+  } else {
+    // 小学以上は保育系はもう発生しない
+    startAge = 6;
+  }
+
+  // pre: 年齢 0〜2 の区間、post: 年齢 3〜5 の区間
+  const pre = (startAge <= 2) ? (3 - startAge) : 0; // 0→3年, 1→2年, 2→1年
+  let post = 0;
+  if (startAge <= 5) {
+    const from = Math.max(startAge, 3);
+    post = (from <= 5) ? (6 - from) : 0; // 3→3年, 4→2年, 5→1年
+  }
+  return { pre, post, total: pre + post };
+}
+
+/* ===== 必要毎月積立（運用あり） ===== */
+function calculateRequiredMonthlyPayment(targetAmountYen, years, ratePct){
+  if (targetAmountYen<=0) return 0;
+  if (!years || years<=0) return targetAmountYen;
+  const r = ratePct/100/12, n = years*12;
+  if (r===0) return targetAmountYen/n;
+  return targetAmountYen * r / (Math.pow(1+r,n)-1);
+}
+
+/* ===== 教育資金（未来分、控除前総額＆不足） ===== */
+function calculateEducationFunds(){
+  const forms = document.querySelectorAll('.child-form');
+  const personIncome=+document.getElementById('personIncome').value||0;
+  const spouseIncome=+document.getElementById('spouseIncome').value||0;
+  const personAge=+document.getElementById('personAge').value||35;
+  const spouseAge=+document.getElementById('spouseAge').value||33;
+
+  const personTax = calculateResidentTax(personIncome, personAge);
+  const spouseTax = calculateResidentTax(spouseIncome, spouseAge);
+  const householdResidentTax = personTax + spouseTax;
+
+  let eduShortageByStageYen = { elementary:0, junior:0, senior:0, university:0 };
+  const childrenDetails = [];
+  const childrenEducationTotals = [];
+  const childrenGrossBreakdown = [];
+
+  forms.forEach((form, idx)=>{
+    const gradeValue = form.querySelector('.child-grade').value;
+    const planAgeSel = form.querySelector('.school-plan-age');
+    const planAge = planAgeSel ? +planAgeSel.value : 0;
+
+    const preparedFundMan = +form.querySelector('.prepared-fund').value || 0;
+    const monthlyPaymentYen = +form.querySelector('.monthly-payment').value || 0;
+
+    const nurseryType     = form.querySelector('.nursery-type')?.value    || 'kindergarten-private';
+    const elementaryType  = form.querySelector('.elementary-type')?.value || 'public';
+    const juniorType      = form.querySelector('.junior-type')?.value     || 'public';
+    const seniorType      = form.querySelector('.senior-type')?.value     || 'public';
+    const universityType  = form.querySelector('.university-type')?.value || 'national';
+
+    const hobby1 = +form.querySelector('.hobby1-cost').value || 0;
+    const hobby2 = +form.querySelector('.hobby2-cost').value || 0;
+    const hobby3 = +form.querySelector('.hobby3-cost').value || 0;
+    const allow  = +form.querySelector('.allowance-cost').value || 0;
+
+    const Y = getRemainingYearsByStage(gradeValue, planAge);
+
+    // ===== 保育園・幼稚園：年数と金額を pre/post に分けて合算（★修正ポイント） =====
+    const N = getNurseryYearsSplit(gradeValue, planAge);
+    Y.nursery = N.total; // 毎月負担控除の年数にも反映
+
+    // 所得割課税額（住民税から均等割5,000円を概算除去）
+    const incomeLevy = (householdResidentTax > 5000) ? (householdResidentTax - 5000) : 0;
+
+    // 0〜2歳年額（帯表）
+    function feeYearFor0to2(residentTax){
+      for (const b of nurseryFees) { if (residentTax >= b.min && residentTax < b.max) return b.fee * 12; }
+      return 79000 * 12;
+    }
+
+    // 「保育園・幼稚園」チェックに紐づく追加費（年額）を保育系全年数に乗せる
+    const extraNurseryPerYear = (() => {
+      let m = 0;
+      if (form.querySelector('.hobby1-nursery')?.checked) m += hobby1;
+      if (form.querySelector('.hobby2-nursery')?.checked) m += hobby2;
+      if (form.querySelector('.hobby3-nursery')?.checked) m += hobby3;
+      if (form.querySelector('.allowance-nursery')?.checked) m += allow;
+      return m * 12;
+    })();
+
+    let nursery0 = 0;
+    if (nurseryType === 'nursery') {
+      const feePre  = feeYearFor0to2(householdResidentTax);         // 円/年（0-2歳）
+      const feePost = (incomeLevy >= 235000) ? 54000 : 0;           // 円/年（3-5歳一律）
+      nursery0 =
+        feePre  * N.pre +
+        feePost * N.post +
+        extraNurseryPerYear * (N.total);
+    } else if (nurseryType === 'kindergarten-public' || nurseryType === 'kindergarten-private') {
+      const kYear = (nurseryType === 'kindergarten-public') ? educationCosts.nursery.public : educationCosts.nursery.private;
+      // 幼稚園は 0-2歳は費用0、3-5歳のみ園の年額
+      nursery0 =
+        0      * N.pre +
+        kYear  * N.post +
+        extraNurseryPerYear * (N.total);
+    } else {
+      // フォールバック（保育園扱い）
+      const feePre  = feeYearFor0to2(householdResidentTax);
+      const feePost = (incomeLevy >= 235000) ? 54000 : 0;
+      nursery0 =
+        feePre  * N.pre +
+        feePost * N.post +
+        extraNurseryPerYear * (N.total);
+    }
+
+    // ===== 小・中・高・大（従来通り） =====
+    const perYear = {};
+    perYear.elementary = (elementaryType==='public') ? educationCosts.elementary.public : educationCosts.elementary.private;
+    perYear.junior     = (juniorType==='public')     ? educationCosts.junior.public     : educationCosts.junior.private;
+    perYear.senior     = (seniorType==='public')     ? educationCosts.senior.public     : educationCosts.senior.private;
+    perYear.university = (function(){
+      switch (universityType){
+        case 'national':        return educationCosts.university.national;
+        case 'private-liberal': return educationCosts.university.privateLiberal;
+        case 'private-science': return educationCosts.university.privateScience;
+        case 'private-medical': return educationCosts.university.privateMedical;
+      }
+    })();
+
+    const extraPerYear = (stage)=>{
+      const years = stage==='elementary'?Y.elementary:stage==='junior'?Y.junior:stage==='senior'?Y.senior:Y.university;
+      if (years<=0) return 0;
+      let m=0;
+      if (form.querySelector(`.hobby1-${stage}`)?.checked) m += hobby1;
+      if (form.querySelector(`.hobby2-${stage}`)?.checked) m += hobby2;
+      if (form.querySelector(`.hobby3-${stage}`)?.checked) m += hobby3;
+      if (form.querySelector(`.allowance-${stage}`)?.checked) m += allow;
+      return m*12;
+    };
+
+    const elementary0 = (perYear.elementary + extraPerYear('elementary')) * Y.elementary;
+    const junior0     = (perYear.junior     + extraPerYear('junior'))     * Y.junior;
+    const senior0     = (perYear.senior     + extraPerYear('senior'))     * Y.senior;
+    const university0 = (perYear.university + extraPerYear('university')) * Y.university;
+
+    // 子別：控除前ステージ内訳（万円）
+    const childrenGross = {
+      nursery:Math.round(nursery0/1000)/10,
+      elementary:Math.round(elementary0/1000)/10,
+      junior:Math.round(junior0/1000)/10,
+      senior:Math.round(senior0/1000)/10,
+      university:Math.round(university0/1000)/10
+    };
+    childrenGross.total = Math.round((nursery0+elementary0+junior0+senior0+university0)/1000)/10;
+    childrenGrossBreakdown.push(childrenGross);
+
+    // 控除前総額（円）
+    const grossYen = nursery0 + elementary0 + junior0 + senior0 + university0;
+    childrenEducationTotals.push(grossYen);
+
+    // 毎月負担で控除（各ステージ残年数分）
+    let nursery = Math.max(0, nursery0 - monthlyPaymentYen*12*Y.nursery);
+    let elementary = Math.max(0, elementary0 - monthlyPaymentYen*12*Y.elementary);
+    let junior = Math.max(0, junior0 - monthlyPaymentYen*12*Y.junior);
+    let senior = Math.max(0, senior0 - monthlyPaymentYen*12*Y.senior);
+    let university = Math.max(0, university0 - monthlyPaymentYen*12*Y.university);
+
+    // 準備済み資金（万円→円）を大学→高→中→小→幼の順で充当
+    let remain = preparedFundMan*10000;
+    const apply = (v)=>{ const a=Math.min(remain,v); remain-=a; return v-a; };
+    university = apply(university); senior=apply(senior); junior=apply(junior); elementary=apply(elementary); nursery=apply(nursery);
+
+    // 不足（万円）
+    childrenDetails.push({
+      childNumber: idx+1,
+      nursery: 　 Math.round(nursery/10000),
+      elementary: Math.round(elementary/10000),
+      junior:     Math.round(junior/10000),
+      senior:     Math.round(senior/10000),
+      university: Math.round(university/10000),
+      total:      Math.round((nursery+elementary+junior+senior+university)/10000)
+    });
+
+    eduShortageByStageYen.elementary += elementary;
+    eduShortageByStageYen.junior     += junior;
+    eduShortageByStageYen.senior     += senior;
+    eduShortageByStageYen.university += university;
+  });
+
+  const totalEduShortageYen =
+    eduShortageByStageYen.elementary + eduShortageByStageYen.junior + eduShortageByStageYen.senior + eduShortageByStageYen.university;
+
+  return {
+    eduShortageByStageYen,
+    totalEduShortageYen,
+    childrenDetails,
+    childrenEducationTotals,
+    childrenGrossBreakdown
+  };
+}
+
+/* ===== 住宅・老後 ===== */
+function calculateHouseFunds(){
+  const years=+document.getElementById('housePurchaseYear').value||5;
+  const down=+document.getElementById('houseDownPayment').value||0;
+  const prep=+document.getElementById('housePreparedFund').value||0;
+  return { shortageYen: Math.max(0,(down-prep)*10000), years };
+}
+function calculateRetirementFunds(){
+  const lifeCost=+document.getElementById('retirementLifeCost').value||25;
+  const retireAge=+document.getElementById('retirementAge').value||65;
+  const lifeExp=+document.getElementById('lifeExpectancy').value||90;
+  const prepared=+document.getElementById('retirementPreparedFund').value||0;
+  const severance=+document.getElementById('severancePay').value||0;
+  const pension=+document.getElementById('pension').value||0;
+  const pensionAge=+document.getElementById('pensionAge').value||65;
+  const personAge=+document.getElementById('personAge').value||35;
+
+  const postInc=+document.getElementById('postRetirementIncome').value||0;
+  const postYears=+document.getElementById('postRetirementWorkYears').value||0;
+
+  const retireYears=Math.max(0,lifeExp-retireAge);
+  const pensionYears=Math.max(0,lifeExp-pensionAge);
+
+  const needYen=lifeCost*12*retireYears*10000;
+  const pensYen=pension*12*pensionYears*10000;
+  const prepYen=(prepared+severance)*10000;
+  const postYen=postInc*12*postYears*10000;
+
+  const shortageYen=Math.max(0,needYen-pensYen-prepYen-postYen);
+  const savingYears=Math.max(0,retireAge-personAge);
+  return { shortageYen, years:savingYears };
+}
+
+/* ===== チャート描画 ===== */
+let shortageChart, savingChart, investmentChart, educationByChildChart;
+function updateCharts(results){
+  const baseOpts={
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:(ctx)=>{
+        const val = typeof ctx.raw==='number'? ctx.raw : (ctx.parsed?.y ?? 0);
+        const id = ctx.chart?.canvas?.id || '';
+        const unit = (id==='savingChart'||id==='investmentChart')?'万円/月':'万円';
+        return `${ctx.dataset?.label?ctx.dataset.label+': ':''}${val.toLocaleString()}${unit}`;
+      }}}
+    },
+    scales:{y:{beginAtZero:true}}
+  };
+
+  // 不足額
+  if (shortageChart) shortageChart.destroy();
+  shortageChart=new Chart(document.getElementById('shortageChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:['教育資金','住宅資金','老後資金'],
+      datasets:[{data:[results.shortage.education,results.shortage.house,results.shortage.retirement],
+        backgroundColor:['rgba(34,197,94,.8)','rgba(251,146,60,.8)','rgba(147,51,234,.8)'],
+        borderColor:['rgb(34,197,94)','rgb(251,146,60)','rgb(147,51,234)'],borderWidth:1}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,title:{display:true,text:`合計: ${results.shortage.total.toLocaleString()}万円`}}}
+  });
+
+  // 積立（運用なし）
+  if (savingChart) savingChart.destroy();
+  savingChart=new Chart(document.getElementById('savingChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:['教育資金','住宅資金','老後資金'],
+      datasets:[{data:[results.saving.education,results.saving.house,results.saving.retirement],
+        backgroundColor:['rgba(34,197,94,.8)','rgba(251,146,60,.8)','rgba(147,51,234,.8)'],
+        borderColor:['rgb(34,197,94)','rgb(251,146,60)','rgb(147,51,234)'],borderWidth:1}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,title:{display:true,text:`合計: ${results.saving.total.toFixed(1)}万円/月`}}}
+  });
+
+  // 積立（運用あり）
+  if (investmentChart) investmentChart.destroy();
+  investmentChart=new Chart(document.getElementById('investmentChart').getContext('2d'),{
+    type:'bar',
+    data:{labels:['教育資金','住宅資金','老後資金'],
+      datasets:[{data:[results.investment.education,results.investment.house,results.investment.retirement],
+        backgroundColor:['rgba(34,197,94,.8)','rgba(251,146,60,.8)','rgba(147,51,234,.8)'],
+        borderColor:['rgb(34,197,94)','rgb(251,146,60)','rgb(147,51,234)'],borderWidth:1}]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,title:{display:true,text:`合計: ${results.investment.total.toFixed(1)}万円/月`}}}
+  });
+
+  // 子ども別：控除前総額 vs 不足額
+  if (educationByChildChart) educationByChildChart.destroy();
+  const gross=(results.childrenEducationTotals||[]).map(y=>Math.round((y/10000)*10)/10);
+  const shortageByChild=(results.childrenDetails||[]).map(c=>c.total||0);
+  const labels=Array.from({length:Math.max(gross.length,shortageByChild.length)},(_,i)=>`第${i+1}子`);
+  educationByChildChart=new Chart(document.getElementById('educationByChildChart').getContext('2d'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'教育資金総額（控除前）',data:gross,backgroundColor:'rgba(59,130,246,.65)',borderColor:'rgb(59,130,246)',borderWidth:1},
+      {label:'不足額（控除後）',data:shortageByChild,backgroundColor:'rgba(234,88,12,.65)',borderColor:'rgb(234,88,12)',borderWidth:1}
+    ]},
+    options:{...baseOpts,plugins:{...baseOpts.plugins,legend:{display:true},title:{display:true,text:'教育資金総額（子ども別, 万円）'}}}
+  });
+}
+
+/* ===== 右ペイン数値反映 ===== */
+function updateResults(results){
+  document.getElementById('educationShortage').textContent=`${results.shortage.education}万円`;
+  document.getElementById('houseShortage').textContent=`${results.shortage.house}万円`;
+  document.getElementById('retirementShortage').textContent=`${results.shortage.retirement}万円`;
+  document.getElementById('totalShortage').textContent=`${results.shortage.total}万円`;
+
+  document.getElementById('educationSaving').textContent=`${results.saving.education.toFixed(1)}万円/月`;
+  document.getElementById('houseSaving').textContent=`${results.saving.house.toFixed(1)}万円/月`;
+  document.getElementById('retirementSaving').textContent=`${results.saving.retirement.toFixed(1)}万円/月`;
+  document.getElementById('totalSaving').textContent=`${results.saving.total.toFixed(1)}万円/月`;
+
+  document.getElementById('educationInvestment').textContent=`${results.investment.education.toFixed(1)}万円/月`;
+  document.getElementById('houseInvestment').textContent=`${results.investment.house.toFixed(1)}万円/月`;
+  document.getElementById('retirementInvestment').textContent=`${results.investment.retirement.toFixed(1)}万円/月`;
+  document.getElementById('totalInvestment').textContent=`${results.investment.total.toFixed(1)}万円/月`;
+
+  document.getElementById('educationPeriod').textContent=`${results.periods.education}年`;
+  document.getElementById('housePeriod').textContent=`${results.periods.house}年`;
+  document.getElementById('retirementPeriod').textContent=`${results.periods.retirement}年`;
+
+  // 不足の子別内訳
+  const el=document.getElementById('childrenDetail');
+  let html='';
+  (results.childrenDetails||[]).forEach(c=>{
+    if (c.total>0){
+      html+=`<div class="child-detail">
+        <div class="font-medium text-gray-700 mb-1">第${c.childNumber}子: ${c.total}万円</div>
+        <div class="ml-3 text-xs space-y-0.5">
+          <div>保育園・幼稚園: ${c.nursery}万円　小学校: ${c.elementary}万円　中学校: ${c.junior}万円</div>
+          <div>高校: ${c.senior}万円　大学: ${c.university}万円</div>
+        </div>
+      </div>`;
+    }
+  });
+  el.innerHTML = html || '<div class="text-gray-500">不足額はありません</div>';
+
+  // 子別ステージ内訳（控除前）
+  const wrap=document.getElementById('educationByChildBreakdown');
+  let out='';
+  (results.childrenGrossBreakdown||[]).forEach((b,i)=>{
+    out+=`<div class="bg-gray-50 rounded-md p-3">
+      <div class="flex justify-between items-center mb-1">
+        <div class="font-semibold text-gray-700">第${i+1}子</div>
+        <div class="text-gray-600 text-sm">合計 <span class="mono font-semibold">${(b.total??0).toLocaleString()}</span> 万円</div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1 mono">
+        <div><span class="stage-badge stage-nur">保・幼</span>${(b.nursery??0).toLocaleString()} 万円</div>
+        <div><span class="stage-badge stage-elem">小学校</span>${(b.elementary??0).toLocaleString()} 万円</div>
+        <div><span class="stage-badge stage-jun">中学校</span>${(b.junior??0).toLocaleString()} 万円</div>
+        <div><span class="stage-badge stage-sen">高校</span>${(b.senior??0).toLocaleString()} 万円</div>
+        <div><span class="stage-badge stage-uni">大学</span>${(b.university??0).toLocaleString()} 万円</div>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = out || '<div class="text-gray-500">子どもの入力がありません</div>';
+
+  updateCharts(results);
+}
+
+/* ===== 実行 ===== */
+function runSimulation(){
+  const edu = calculateEducationFunds();
+  const house = calculateHouseFunds();
+  const retire = calculateRetirementFunds();
+
+  const eduYears=+document.getElementById('educationSavingYears').value||15;
+  const eduRate=+document.getElementById('educationInterestRate').value||3;
+  const houseYears=+document.getElementById('houseSavingYears').value||5;
+  const houseRate=+document.getElementById('houseInterestRate').value||2;
+  const retYears=+document.getElementById('retirementSavingYears').value||30;
+  const retRate=+document.getElementById('retirementInterestRate').value||4;
+
+  const includeElementary=document.getElementById('includeElementary')?.checked??true;
+  const includeJunior=document.getElementById('includeJunior')?.checked??true;
+  const includeSenior=document.getElementById('includeSenior')?.checked??true;
+  const includeUniversity=document.getElementById('includeUniversity')?.checked??true;
+
+  const eduShortYen =
+    (includeElementary?edu.eduShortageByStageYen.elementary:0) +
+    (includeJunior?edu.eduShortageByStageYen.junior:0) +
+    (includeSenior?edu.eduShortageByStageYen.senior:0) +
+    (includeUniversity?edu.eduShortageByStageYen.university:0);
+
+  const saving={
+    education: eduShortYen/(eduYears*12)/10000,
+    house:     house.shortageYen/(houseYears*12)/10000,
+    retirement:retire.shortageYen/(retYears*12)/10000
+  };
+  saving.total=saving.education+saving.house+saving.retirement;
+
+  const investment={
+    education:  calculateRequiredMonthlyPayment(eduShortYen, eduYears, eduRate)/10000,
+    house:      calculateRequiredMonthlyPayment(house.shortageYen, houseYears, houseRate)/10000,
+    retirement: calculateRequiredMonthlyPayment(retire.shortageYen, retYears, retRate)/10000
+  };
+  investment.total = investment.education + investment.house + investment.retirement;
+
+  updateResults({
+    shortage:{
+      education:Math.round(eduShortYen/10000),
+      house:Math.round(house.shortageYen/10000),
+      retirement:Math.round(retire.shortageYen/10000),
+      total:Math.round((eduShortYen+house.shortageYen+retire.shortageYen)/10000)
+    },
+    saving,
+    investment,
+    periods:{education:eduYears,house:houseYears,retirement:retYears},
+    childrenDetails:edu.childrenDetails,
+    childrenEducationTotals:edu.childrenEducationTotals,
+    childrenGrossBreakdown:edu.childrenGrossBreakdown
+  });
+}
+
+/* ===== 子ども追加・削除＆UI連動 ===== */
+let childrenCount=1;
+function addChild(){
+  if(childrenCount>=5) return;
+  childrenCount++;
+  const tpl=document.querySelector('.child-form');
+  const clone=tpl.cloneNode(true);
+  clone.setAttribute('data-child',childrenCount);
+  const h3=clone.querySelector('h3');
+  h3.textContent=`第${childrenCount}子`;
+  const btn=document.createElement('button');
+  btn.className='delete-child-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm';
+  btn.innerHTML='<i class="fas fa-trash mr-1"></i>削除';
+  btn.addEventListener('click',()=>deleteChild(clone));
+  h3.appendChild(btn);
+
+  // 値初期化
+  clone.querySelectorAll('input[type="number"]').forEach(i=>{
+    if(i.classList.contains('monthly-payment')) i.value='10000';
+    else if(i.classList.contains('prepared-fund')) i.value='0';
+    else i.value='0';
+  });
+  clone.querySelectorAll('input[type="checkbox"]').forEach(cb=>cb.checked=false);
+
+  const grade=clone.querySelector('.child-grade');
+  const uns=clone.querySelector('.unschool-planning');
+  if(grade&&uns){
+    uns.classList.toggle('hidden',!String(grade.value).includes('unschool'));
+    grade.addEventListener('change',function(){
+      uns.classList.toggle('hidden',!this.value.includes('unschool'));
+    });
+  }
+  document.getElementById('childrenContainer').appendChild(clone);
+  runSimulation();
+}
+function deleteChild(el){
+  const idx=+el.getAttribute('data-child');
+  if(idx===1) return;
+  el.remove();
+  const list=document.querySelectorAll('.child-form');
+  childrenCount=list.length;
+  list.forEach((c,i)=>{
+    const n=i+1; c.setAttribute('data-child',n);
+    const h3=c.querySelector('h3'); h3.textContent=`第${n}子`;
+    if(n>1){
+      const b=document.createElement('button');
+      b.className='delete-child-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm';
+      b.innerHTML='<i class="fas fa-trash mr-1"></i>削除';
+      b.addEventListener('click',()=>deleteChild(c));
+      h3.appendChild(b);
+    }
+  });
+  runSimulation();
+}
+
+/* ===== 起動時イベント ===== */
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('addChildBtn').addEventListener('click', addChild);
+  document.getElementById('calculateBtn').addEventListener('click', runSimulation);
+  document.addEventListener('change',(e)=>{
+    if(e.target?.classList?.contains('child-grade')){
+      const form=e.target.closest('.child-form');
+      const uns=form?.querySelector('.unschool-planning');
+      if(uns) uns.classList.toggle('hidden', !e.target.value.includes('unschool'));
+    }
+  });
+  runSimulation();
+});
+</script>
+</body>
+</html>
