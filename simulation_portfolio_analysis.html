@@ -482,6 +482,7 @@
                 improvedFuture.mean, improvedFuture.upper30, improvedFuture.lower30
             ];
 
+            // ▼▼▼ ここからが変更箇所 ▼▼▼
             futureChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -510,8 +511,9 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
+                                // Y軸の目盛りを整数表示にする
                                 callback: function(value) {
-                                    return value.toLocaleString() + '万円';
+                                    return Math.round(value).toLocaleString() + '万円';
                                 }
                             }
                         }
@@ -519,8 +521,11 @@
                     plugins: {
                         tooltip: {
                             callbacks: {
+                                // ツールチップの値を整数表示にする
                                 label: function(context) {
-                                    return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + '万円';
+                                    const label = context.dataset.label || '';
+                                    const value = Math.round(context.parsed.y);
+                                    return label + ': ' + value.toLocaleString() + '万円';
                                 }
                             }
                         },
@@ -532,6 +537,7 @@
                     }
                 }
             });
+            // ▲▲▲ ここまでが変更箇所 ▲▲▲
         }
 
         // メイン更新関数
@@ -607,7 +613,6 @@
             document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, (sharpe / maxSharpe) * 100)}%`;
         }
 
-        // ▼▼▼ JavaScriptを修正 ▼▼▼
         // 増減ボタンのクリックイベント処理
         document.addEventListener('click', function(event) {
             if (event.target.classList.contains('spinner-btn')) {
@@ -646,7 +651,6 @@
                 }
             }
         });
-        // ▲▲▲ JavaScriptを修正 ▲▲▲
 
         // イベントリスナー
         document.getElementById('investmentPeriod').addEventListener('change', updatePortfolio);
