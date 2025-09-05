@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ポートフォリオ分析・将来シミュレーションツール</title>
+    <title>ポートフォリオ分析・将来シミュレーションツール（現代ポートフォリオ理論版）</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -25,7 +25,6 @@
         .input-field { transition: border-color 0.2s ease; }
         .input-field:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
         
-        /* input[type=number] のデフォルトの矢印を非表示にする */
         input::-webkit-outer-spin-button,
         input::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -34,19 +33,18 @@
         input[type=number] {
             -moz-appearance: textfield;
         }
-        /* 増減ボタンのスタイル */
         .spinner-btn {
             cursor: pointer;
             padding: 0.5rem;
-            width: 2.5rem; /* ボタンの幅を広くする */
-            height: 2.5rem; /* ボタンの高さを高くする */
-            font-size: 1.5rem; /* フォントサイズを大きくする */
+            width: 2.5rem;
+            height: 2.5rem;
+            font-size: 1.5rem;
             line-height: 1;
             text-align: center;
             border: 1px solid #a9a9a9;
             background-color: #a9a9a9;
             color: #ffffff;
-            user-select: none; /* テキスト選択を防ぐ */
+            user-select: none;
             border-radius: 0.375rem;
         }
         .spinner-btn:active {
@@ -57,7 +55,7 @@
 <body class="bg-gray-50 p-4">
     <div class="max-w-7xl mx-auto">
         <h1 class="text-2xl font-bold text-center text-white bg-blue-600 p-4 rounded-lg shadow-lg mb-8"> 
-            <i class="fas fa-chart-line mr-3"></i>ポートフォリオ分析・将来シミュレーションツール
+            <i class="fas fa-chart-line mr-3"></i>ポートフォリオ分析・将来シミュレーションツール（現代ポートフォリオ理論版）
         </h1>
         <div class="settings-section border-2 rounded-lg p-6 mb-6 shadow-lg">
             <h2 class="text-2xl font-bold mb-4 flex items-center text-gray-700"><i class="fas fa-edit mr-2"></i>投資設定</h2>
@@ -222,7 +220,7 @@
                 <i class="fas fa-exclamation-triangle mr-3 text-2xl"></i>免責事項
             </h2>
             <div class="text-sm text-gray-700 space-y-1 leading-tight">
-                <p>※本シミュレーションは、将来の運用成果を保証するものではありません。過去のデータ等に基づいて試算を行っており、シミュレーション結果と実際の結果が一致しない場合があります。また、入力された取引と同様の取引を実際に行った場合でも、シミュレーションで表示される結果と実際の結果が一致するとは限りません。</p>
+                <p>※本シミュレーションは現代ポートフォリオ理論に基づいており、将来の運用成果を保証するものではありません。過去のデータ等に基づいて試算を行っており、シミュレーション結果と実際の結果が一致しない場合があります。</p>
                 <p>※本シミュレーションでは、税金や手数料等は考慮しておりません。</p>
                 <p>※本シミュレーションおよび掲載情報の利用により生じたいかなる損害（直接的・間接的を問わず）についても、当社は一切の責任を負いません。実際の資産運用や投資判断は、必ずご自身の責任において行ってください。</p>
                 <p>※当社は、お客様が本シミュレーションを利用したことにより生じた結果について、一切の責任を負いません。また、本シミュレーションは簡易的な計算方法を用いており、その正確性および完全性を保証するものではありません。なお、シミュレーション内容は予告なく変更する場合があります。</p>
@@ -233,6 +231,7 @@
     </div>
 
     <script>
+        // 資産定義（期間別の年率リターン[%] / リスク[%]）
         const assets = [
             { name: "現金", returns: [0.1, 0, 0.1], risks: [0, 0, 0] },
             { name: "国内株式", returns: [17.3, 8.4, 6.8], risks: [11.9, 14.4, 16.7] },
@@ -249,6 +248,26 @@
             { name: "新興国REIT", returns: [18.6, 2.3, 6.1], risks: [14.6, 21.1, 22.6] },
             { name: "金", returns: [18.5, 13.6, 12.3], risks: [15.1, 13.2, 16.6] },
             { name: "コモディティ", returns: [19.0, 4.9, 0.8], risks: [18.1, 16.8, 18.5] }
+        ];
+
+        // 相関係数行列（15x15）- 提供されたPDFデータに基づく正確な値
+        const correlationMatrix = [
+            // 現金, 国内株式, 米国株式, 先進国株式, 新興国株式, 世界株式, 国内債券, 米国債, 先進国債券, 新興国債券, 国内REIT, 先進国REIT, 新興国REIT, 金, コモディティ
+            [1.0,    0.246,  -0.006,   0.005,   -0.016,  -0.006,   0.036,   0.041,  -0.055,   0.018,    0.04,   -0.063,  -0.056,   0.009,  -0.004], // 現金
+            [0.246,  1.0,     0.57,    0.79,     0.47,    0.69,   -0.17,   -0.29,   0.65,     0.3,      0.39,    0.492,   0.587,   -0.26,   0.32],  // 国内株式
+            [-0.006, 0.57,    1.0,     0.97,     0.69,    0.98,    0.16,    0.13,   0.73,     0.67,     0.48,    0.703,   0.724,    0.08,   0.35],  // 米国株式
+            [0.005,  0.79,    0.97,    1.0,      0.87,    0.997,  -0.26,    0.13,   0.76,     0.77,     0.42,    0.789,   0.641,    0.24,   0.38],  // 先進国株式
+            [-0.016, 0.47,    0.69,    0.87,     1.0,     0.8,     0.11,    0.13,   0.72,     0.72,     0.33,    0.717,   0.742,    0.33,   0.43],  // 新興国株式
+            [-0.006, 0.69,    0.98,    0.997,    0.8,     1.0,     0.14,    0.14,   0.743,    0.74,     0.49,    0.794,   0.669,    0.15,   0.36],  // 世界株式
+            [0.036, -0.17,    0.16,   -0.26,     0.11,    0.14,    1.0,     0.46,  -0.2,      0.35,     0.22,    0.002,  -0.055,    0.21,  -0.23],  // 国内債券
+            [0.041, -0.29,    0.13,    0.13,     0.13,    0.14,    0.46,    1.0,    0.68,     0.4,     -0.09,    0.125,   0.141,    0.41,  -0.15],  // 米国債
+            [-0.055, 0.65,    0.73,    0.76,     0.72,    0.743,  -0.2,     0.68,   1.0,      0.83,     0.39,    0.664,   0.859,    0.41,  -0.08],  // 先進国債券
+            [0.018,  0.3,     0.67,    0.77,     0.72,    0.74,    0.35,    0.4,    0.83,     1.0,      0.46,    0.764,   0.434,    0.36,   0.18],  // 新興国債券
+            [0.04,   0.39,    0.48,    0.42,     0.33,    0.49,    0.22,   -0.09,   0.39,     0.46,     1.0,     0.326,   0.746,    0.05,   0.32],  // 国内REIT
+            [-0.063, 0.492,   0.703,   0.789,    0.717,   0.794,   0.002,   0.125,  0.664,    0.764,    0.326,   1.0,     0.746,    0.19,   0.339], // 先進国REIT
+            [-0.056, 0.587,   0.724,   0.641,    0.742,   0.669,  -0.055,   0.141,  0.859,    0.434,    0.746,   0.746,   1.0,      0.17,   0.362], // 新興国REIT
+            [0.009, -0.26,    0.08,    0.24,     0.33,    0.15,    0.21,    0.41,   0.41,     0.36,     0.05,    0.19,    0.17,     1.0,    0.32],  // 金
+            [-0.004, 0.32,    0.35,    0.38,     0.43,    0.36,   -0.23,   -0.15,  -0.08,     0.18,     0.32,    0.339,   0.362,    0.32,   1.0]   // コモディティ
         ];
 
         const colors = [
@@ -301,24 +320,40 @@
             });
         }
 
-        // ポートフォリオ計算
+        // ポートフォリオ計算（現代ポートフォリオ理論）
         function calculatePortfolio(amounts, periodIndex) {
             const total = amounts.reduce((sum, amount) => sum + amount, 0);
             if (total === 0) return { return: 0, risk: 0, weights: new Array(assets.length).fill(0) };
 
             const weights = amounts.map(amount => amount / total);
             
+            // 期待リターンの計算（加重平均）
             let portfolioReturn = 0;
-            let portfolioVariance = 0;
+            for (let i = 0; i < assets.length; i++) {
+                portfolioReturn += weights[i] * assets[i].returns[periodIndex];
+            }
 
-            weights.forEach((weight, i) => {
-                portfolioReturn += weight * assets[i].returns[periodIndex];
-                portfolioVariance += Math.pow(weight * assets[i].risks[periodIndex], 2);
-            });
+            // 現代ポートフォリオ理論に基づくリスク計算
+            // σp² = Σi Σj wi * wj * σi * σj * ρij
+            let portfolioVariance = 0;
+            
+            for (let i = 0; i < assets.length; i++) {
+                for (let j = 0; j < assets.length; j++) {
+                    const correlation = correlationMatrix[i][j];
+                    const riskI = assets[i].risks[periodIndex] / 100; // %を小数に変換
+                    const riskJ = assets[j].risks[periodIndex] / 100; // %を小数に変換
+                    const weightI = weights[i];
+                    const weightJ = weights[j];
+                    
+                    portfolioVariance += weightI * weightJ * riskI * riskJ * correlation;
+                }
+            }
+
+            const portfolioRisk = Math.sqrt(Math.max(0, portfolioVariance)) * 100; // 負の分散を防ぐ
 
             return {
                 return: portfolioReturn,
-                risk: Math.sqrt(portfolioVariance),
+                risk: portfolioRisk,
                 weights: weights
             };
         }
@@ -326,53 +361,49 @@
        // 将来価値計算（対数正規分布モデル）
         function calculateFutureValues(amounts, periodIndex, years) {
             const portfolio = calculatePortfolio(amounts, periodIndex);
-            const total = amounts.reduce((sum, amount) => sum + amount, 0); // 投資元本
+            const total = amounts.reduce((sum, amount) => sum + amount, 0);
             
             if (total === 0) {
                 return { principal: 0, median: 0, mode: 0, mean: 0, upper30: 0, lower30: 0, lossProb: 0 };
             }
 
+            const n = years;
+            const expectedReturn = portfolio.return / 100;
+            const risk = portfolio.risk / 100;
 
-            const n = years; // シミュレーション年数
-            const expectedReturn = portfolio.return / 100; // 期待リターン（小数）
-            const risk = portfolio.risk / 100; // リスク（小数）
-
-            // ステップ1: 対数正規分布のパラメータμとσを計算
+            // 対数正規分布のパラメータ計算
             const m = 1 + expectedReturn;
             const s = risk;
-            const term = Math.pow(s / m, 2) + 1;
+            
+            let mu, sigma;
+            if (s === 0) {
+                // リスクが0の場合（現金のみなど）
+                mu = Math.log(Math.max(m, 0.001)); // 極小値で下限を設定
+                sigma = 0;
+            } else {
+                const term = Math.pow(s / m, 2) + 1;
+                mu = Math.log(Math.max(m, 0.001)) - Math.log(term) / 2;
+                sigma = Math.sqrt(Math.log(term));
+            }
 
-            const mu = Math.log(m) - Math.log(term) / 2;
-            const sigma = Math.sqrt(Math.log(term));
-
-            // ステップ2: 各指標を計算
-            // 中央値 = 投資元本 * exp(nμ)
+            // 各指標の計算
             const median = total * Math.exp(n * mu);
-
-            // 平均値 = 投資元本 * exp(nμ + n(σ^2)/2)
             const mean = total * Math.exp(n * mu + (n * Math.pow(sigma, 2)) / 2);
-
-            // 最頻値 = 投資元本 * exp(nμ - n(σ^2))
             const mode = total * Math.exp(n * mu - n * Math.pow(sigma, 2));
 
-            // 上位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.7))
-            const normsinv_07 = 0.5244; // norm.s.inv(0.7)の近似値
+            const normsinv_07 = 0.5244;
             const upper30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_07);
-
-            // 下位30% = 投資元本 * exp(nμ + σ*sqrt(n)*norm.s.inv(0.3))
-            const normsinv_03 = -0.5244; // norm.s.inv(0.3)の近似値
+            const normsinv_03 = -0.5244;
             const lower30 = total * Math.exp(n * mu + sigma * Math.sqrt(n) * normsinv_03);
 
-            // 元本割れする確率 = NORM.S.DIST(-μ*sqrt(n)/σ, TRUE)
+            // 元本割れ確率
             let lossProb = 0;
-            if (sigma > 0) { // sigmaが0だとゼロ除算になるためチェック
+            if (sigma > 0) {
                 const z = (-mu * Math.sqrt(n)) / sigma;
-                // 既存のerf関数を使ってNORM.S.DISTを計算
                 lossProb = 0.5 * (1 + erf(z / Math.sqrt(2)));
             }
-            lossProb *= 100; // パーセントに変換
+            lossProb = Math.max(0, Math.min(100, lossProb * 100)); // 0-100%の範囲に制限
 
-        
             return {
                 principal: total,
                 median: median,
@@ -450,7 +481,7 @@
                         },
                         title: {
                             display: true,
-                            text: title,
+                            text: title || '',
                             font: { size: 14 }
                         }
                     }
@@ -482,7 +513,6 @@
                 improvedFuture.mean, improvedFuture.upper30, improvedFuture.lower30
             ];
 
-            // ▼▼▼ ここからが変更箇所 ▼▼▼
             futureChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -511,7 +541,6 @@
                         y: {
                             beginAtZero: true,
                             ticks: {
-                                // Y軸の目盛りを整数表示にする
                                 callback: function(value) {
                                     return Math.round(value).toLocaleString() + '万円';
                                 }
@@ -521,7 +550,6 @@
                     plugins: {
                         tooltip: {
                             callbacks: {
-                                // ツールチップの値を整数表示にする
                                 label: function(context) {
                                     const label = context.dataset.label || '';
                                     const value = Math.round(context.parsed.y);
@@ -537,7 +565,22 @@
                     }
                 }
             });
-            // ▲▲▲ ここまでが変更箇所 ▲▲▲
+        }
+
+        // パフォーマンス表示更新
+        function updatePerformanceDisplay(type, expectedReturn, risk, sharpe) {
+            document.getElementById(`${type}ExpectedReturn`).textContent = `${expectedReturn.toFixed(2)}%`;
+            document.getElementById(`${type}Risk`).textContent = `${risk.toFixed(2)}%`;
+            document.getElementById(`${type}Sharpe`).textContent = sharpe.toFixed(2);
+
+            // プログレスバー更新
+            const maxReturn = 25;
+            const maxRisk = 25;
+            const maxSharpe = 2;
+
+            document.getElementById(`${type}ReturnBar`).style.width = `${Math.min(100, Math.max(0, (expectedReturn / maxReturn) * 100))}%`;
+            document.getElementById(`${type}RiskBar`).style.width = `${Math.min(100, Math.max(0, (risk / maxRisk) * 100))}%`;
+            document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, Math.max(0, (sharpe / maxSharpe) * 100))}%`;
         }
 
         // メイン更新関数
@@ -584,8 +627,8 @@
             updatePerformanceDisplay('improved', improvedPortfolio.return, improvedPortfolio.risk, improvedSharpe);
 
             // グラフ更新
-            updatePieChart('currentPieChart', currentAmounts,);
-            updatePieChart('improvedPieChart', improvedAmounts,);
+            updatePieChart('currentPieChart', currentAmounts, '現在のポートフォリオ構成');
+            updatePieChart('improvedPieChart', improvedAmounts, '改善ポートフォリオ構成');
 
             // 将来価値計算
             const currentFuture = calculateFutureValues(currentAmounts, periodIndex, years);
@@ -596,21 +639,6 @@
             // 元本割れ確率表示
             document.getElementById('currentLossProb').textContent = `${currentFuture.lossProb.toFixed(1)}%`;
             document.getElementById('improvedLossProb').textContent = `${improvedFuture.lossProb.toFixed(1)}%`;
-        }
-
-        function updatePerformanceDisplay(type, expectedReturn, risk, sharpe) {
-            document.getElementById(`${type}ExpectedReturn`).textContent = `${expectedReturn.toFixed(2)}%`;
-            document.getElementById(`${type}Risk`).textContent = `${risk.toFixed(2)}%`;
-            document.getElementById(`${type}Sharpe`).textContent = sharpe.toFixed(2);
-
-            // プログレスバー更新（最大値を適切に設定）
-            const maxReturn = 25;
-            const maxRisk = 25;
-            const maxSharpe = 2;
-
-            document.getElementById(`${type}ReturnBar`).style.width = `${Math.min(100, (expectedReturn / maxReturn) * 100)}%`;
-            document.getElementById(`${type}RiskBar`).style.width = `${Math.min(100, (risk / maxRisk) * 100)}%`;
-            document.getElementById(`${type}SharpeBar`).style.width = `${Math.min(100, (sharpe / maxSharpe) * 100)}%`;
         }
 
         // 増減ボタンのクリックイベント処理
@@ -647,24 +675,23 @@
                         input.value = newValue;
                     }
                     
-                    updatePortfolio(); // 値の変更後にメインの更新関数を呼び出す
+                    updatePortfolio();
                 }
             }
         });
 
         // イベントリスナー
         document.getElementById('investmentPeriod').addEventListener('change', updatePortfolio);
-        document.getElementById('simulationYears').addEventListener('input', updatePortfolio); // inputイベントに変更
-        document.getElementById('riskFreeRate').addEventListener('input', updatePortfolio); // inputイベントに変更
+        document.getElementById('simulationYears').addEventListener('input', updatePortfolio);
+        document.getElementById('riskFreeRate').addEventListener('input', updatePortfolio);
 
         // 初期化
         createInputFields();
-        // リスクフリーレートの初期値をフォーマット
         const riskFreeRateInput = document.getElementById('riskFreeRate');
         riskFreeRateInput.value = parseFloat(riskFreeRateInput.value).toFixed(1);
-
         updatePortfolio();
     </script>
+
     <footer class="text-center text-gray-500 text-sm py-4 mt-8 border-t">
         &copy; 2024 fpengineer. All Rights Reserved.
     </footer>
